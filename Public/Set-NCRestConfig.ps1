@@ -52,11 +52,12 @@ function Set-NCRestConfig {
     $BaseUrl = $BaseUrl.TrimEnd('/')
 
     # Encrypt tokens manually
+    Write-Verbose "[NCRESTCONFIG] Encrypting ApiToken."
     $secureApiToken = ConvertTo-SecureString -String $ApiToken -AsPlainText -Force
     $encryptedApiToken = "Secure:" + [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes([System.Runtime.InteropServices.Marshal]::PtrToStringBSTR([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureApiToken))))
 
     # Using environment variables for secure storage
-    Write-Verbose "[NCRESTCONFIG] Setting environment variables for BaseUrl and ApiToken."
+    Write-Verbose "[NCRESTCONFIG] Setting environment variables for BaseUrl and encrypted ApiToken."
 
     [System.Environment]::SetEnvironmentVariable('NcentralBaseUrl', $BaseUrl, [System.EnvironmentVariableTarget]::Process)
     [System.Environment]::SetEnvironmentVariable('NcentralApiToken', $encryptedApiToken, [System.EnvironmentVariableTarget]::Process)

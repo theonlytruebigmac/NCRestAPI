@@ -81,9 +81,11 @@ class NCRestAPI {
         $this.RefreshTokenExpiration = [System.Environment]::GetEnvironmentVariable('RefreshTokenExpiration', [System.EnvironmentVariableTarget]::Process)
         $this.Verbose = $verbose
         
+        $this.WriteVerboseOutput("[NCRESTAPI] Decrypting Stored API Token from Config.")
         $this.DecryptTokens()
     
         if (-not $this.AccessToken -or -not $this.RefreshToken) {
+            $this.WriteVerboseOutput("[NCRESTAPI] Authenticating for the first time.")
             $this.Authenticate()
         }
     }
@@ -276,6 +278,7 @@ class NCRestAPI {
         $this.EnsureValidToken()
     
         # Decrypt tokens before use
+        $this.WriteVerboseOutput("[NCRESTAPI] GET: Decrypting tokens.")
         $this.DecryptTokens()
     
         $url = "$($this.BaseUrl)/$endpoint"
@@ -308,6 +311,7 @@ class NCRestAPI {
         $this.EnsureValidToken()
     
         # Decrypt tokens before use
+        $this.WriteVerboseOutput("[NCRESTAPI] POST: Decrypting tokens.")
         $this.DecryptTokens()
     
         $url = "$($this.BaseUrl)/$endpoint"
@@ -336,6 +340,7 @@ class NCRestAPI {
         $this.EnsureValidToken()
     
         # Decrypt tokens before use
+        $this.WriteVerboseOutput("[NCRESTAPI] PUT: Decrypting tokens.")
         $this.DecryptTokens()
     
         $url = "$($this.BaseUrl)/$endpoint"
@@ -364,6 +369,7 @@ class NCRestAPI {
         $this.EnsureValidToken()
     
         # Decrypt tokens before use
+        $this.WriteVerboseOutput("[NCRESTAPI] DELETE: Decrypting tokens.")
         $this.DecryptTokens()
     
         $url = "$($this.BaseUrl)/$endpoint"
