@@ -36,7 +36,7 @@ function Set-NCRestConfig {
 
         [Parameter(Mandatory = $false)]
         [string]$AccessTokenExpiration = "1h",
-       
+
         [Parameter(Mandatory = $false)]
         [string]$RefreshTokenExpiration = "25h"
     )
@@ -58,7 +58,6 @@ function Set-NCRestConfig {
 
     # Using environment variables for secure storage
     Write-Verbose "[NCRESTCONFIG] Setting environment variables for BaseUrl and encrypted ApiToken."
-
     [System.Environment]::SetEnvironmentVariable('NcentralBaseUrl', $BaseUrl, [System.EnvironmentVariableTarget]::Process)
     [System.Environment]::SetEnvironmentVariable('NcentralApiToken', $encryptedApiToken, [System.EnvironmentVariableTarget]::Process)
     
