@@ -82,6 +82,9 @@ class NCRestAPI {
         $this.AccessTokenExpiration = [System.Environment]::GetEnvironmentVariable('AccessTokenExpiration', [System.EnvironmentVariableTarget]::Process)
         $this.RefreshTokenExpiration = [System.Environment]::GetEnvironmentVariable('RefreshTokenExpiration', [System.EnvironmentVariableTarget]::Process)
         $this.Verbose = $verbose
+        
+        $this.DecryptTokens()
+    
         if (-not $this.AccessToken -or -not $this.RefreshToken) {
             $this.Authenticate()
         }
@@ -98,20 +101,60 @@ class NCRestAPI {
 
     [void] StoreTokens([string]$accessToken, [string]$refreshToken) {
         $this.WriteVerboseOutput("[NCRESTAPI] StoreTokens: Storing access and refresh tokens.")
-        [System.Environment]::SetEnvironmentVariable('NcentralAccessToken', $accessToken, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('NcentralRefreshToken', $refreshToken, [System.EnvironmentVariableTarget]::Process)
-        $this.AccessToken = $accessToken
-        $this.RefreshToken = $refreshToken
-    }
+        if ($accessToken -notmatch '^Secure:') {
+            $this.WriteVerboseOutput("[NCRESTAPI] StoreTokens: Encrypting access token.")
+            $secureAccessToken = ConvertTo-SecureString -String $accessToken -AsPlainText -Force
+            $encryptedAccessToken = "Secure:" + [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes([System.Runtime.InteropServices.Marshal]::PtrToStringBSTR([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureAccessToken))))
+        } else {
+            $this.WriteVerboseOutput("[NCRESTAPI] StoreTokens: Access token is already encrypted.")
+            $encryptedAccessToken = $accessToken
+        }
+        
+        if ($refreshToken -notmatch '^Secure:') {
+            $this.WriteVerboseOutput("[NCRESTAPI] StoreTokens: Encrypting refresh token.")
+            $secureRefreshToken = ConvertTo-SecureString -String $refreshToken -AsPlainText -Force
+            $encryptedRefreshToken = "Secure:" + [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes([System.Runtime.InteropServices.Marshal]::PtrToStringBSTR([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureRefreshToken))))
+        } else {
+            $this.WriteVerboseOutput("[NCRESTAPI] StoreTokens: Refresh token is already encrypted.")
+            $encryptedRefreshToken = $refreshToken
+        }
+        
+        $this.WriteVerboseOutput("[NCRESTAPI] StoreTokens: Setting environment variables for encrypted access and refresh tokens.")
+        [System.Environment]::SetEnvironmentVariable('NcentralAccessToken', $encryptedAccessToken, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('NcentralRefreshToken', $encryptedRefreshToken, [System.EnvironmentVariableTarget]::Process)
+        $this.AccessToken = $encryptedAccessToken
+        $this.RefreshToken = $encryptedRefreshToken
+    }             
+
+    [void] DecryptTokens() {
+        if ($this.AccessToken -match '^Secure:') {
+            $this.WriteVerboseOutput("[NCRESTAPI] DecryptTokens: Decrypting Access Token.")
+            $encryptedToken = $this.AccessToken.Substring(7)
+            $this.AccessToken = [System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String($encryptedToken))
+        }
+        if ($this.RefreshToken -match '^Secure:') {
+            $this.WriteVerboseOutput("[NCRESTAPI] DecryptTokens: Decrypting Refresh Token.")
+            $encryptedToken = $this.RefreshToken.Substring(7)
+            $this.RefreshToken = [System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String($encryptedToken))
+        }
+    }    
 
     [void] Authenticate() {
         $this.WriteVerboseOutput("[NCRESTAPI] Authenticate: Starting authentication process.")
         $url = "$($this.BaseUrl)/api/auth/authenticate"
+        
+        # Decrypt the ApiToken if it is encrypted
+        if ($this.ApiToken -match '^Secure:') {
+            $this.WriteVerboseOutput("[NCRESTAPI] Authenticate: Decrypting ApiToken.")
+            $encryptedToken = $this.ApiToken.Substring(7)
+            $this.ApiToken = [System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String($encryptedToken))
+        }
+        
         $headers = @{
             'Accept'        = '*/*'
             'Authorization' = "Bearer $($this.ApiToken)"
         }
-
+    
         if ($this.RefreshTokenExpiration -and $this.AccessTokenExpiration) {
             $headers['X-REFRESH-EXPIRY-OVERRIDE'] = "$($this.RefreshTokenExpiration)"
             $headers['X-ACCESS-EXPIRY-OVERRIDE']  = "$($this.AccessTokenExpiration)"
@@ -123,7 +166,7 @@ class NCRestAPI {
             $headers['X-ACCESS-EXPIRY-OVERRIDE']  = "$($this.AccessTokenExpiration)"
             $this.WriteVerboseOutput("[NCRESTAPI] Authenticate: Access Token expiration set. Access token: $($this.AccessTokenExpiration)")
         }
-
+    
         $this.WriteVerboseOutput("[NCRESTAPI] Authenticate: URL: $($url)")
         $this.WriteVerboseOutput("[NCRESTAPI] Authenticate: Headers: $($headers | ConvertTo-Json)")
         try {
@@ -140,10 +183,18 @@ class NCRestAPI {
             $this.WriteVerboseOutput("[NCRESTAPI] Authenticate: Authentication failed: $($_.Exception.Message)")
             throw $_.Exception.Message
         }
-    }
+    }    
 
     [bool] ValidateToken() {
         $this.WriteVerboseOutput("[NCRESTAPI] ValidateToken: Starting Token Validation process.")
+    
+        # Decrypt the AccessToken if it is encrypted
+        if ($this.AccessToken -match '^Secure:') {
+            $this.WriteVerboseOutput("[NCRESTAPI] ValidateToken: Decrypting AccessToken.")
+            $encryptedToken = $this.AccessToken.Substring(7)
+            $this.AccessToken = [System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String($encryptedToken))
+        }
+    
         $url = "$($this.BaseUrl)/api/auth/validate"
         $headers = @{
             'Accept'        = '*/*'
@@ -162,10 +213,18 @@ class NCRestAPI {
             $this.WriteVerboseOutput("[NCRESTAPI] ValidateToken: Token validation failed: $($_.Exception.Message)")
             return $false
         }
-    }
+    }    
 
     [void] RefreshAccessToken() {
         $this.WriteVerboseOutput("[NCRESTAPI] RefreshAccessToken: Starting token refresh process.")
+    
+        # Decrypt the RefreshToken if it is encrypted
+        if ($this.RefreshToken -match '^Secure:') {
+            $this.WriteVerboseOutput("[NCRESTAPI] RefreshAccessToken: Decrypting RefreshToken.")
+            $encryptedToken = $this.RefreshToken.Substring(7)
+            $this.RefreshToken = [System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String($encryptedToken))
+        }
+    
         $url = "$($this.BaseUrl)/api/auth/refresh"
         $headers = @{
             'Accept'        = '*/*'
@@ -191,28 +250,36 @@ class NCRestAPI {
             $this.WriteVerboseOutput("[NCRESTAPI] RefreshAccessToken: Token refresh failed: $($_.Exception.Message)")
             throw $_.Exception.Message
         }
-    }
+    }    
 
     [void] EnsureValidToken() {
         $this.WriteVerboseOutput("[NCRESTAPI] EnsureValidToken: Checking if Access Token is still valid.")
+        
+        # Ensure the token is decrypted before validation
+        $this.DecryptTokens()
+        
         if (-not $this.AccessToken) {
             throw "[NCRESTAPI] EnsureValidToken: No access token. Authentication failed."
         }
-
+    
         if (-not $this.ValidateToken()) {
             $this.WriteVerboseOutput("[NCRESTAPI] EnsureValidToken: Token validation failed. Refreshing token.")
             $this.RefreshAccessToken()
         }
-
+    
         if (-not $this.AccessToken) {
             throw "[NCRESTAPI] EnsureValidToken: No access token. Refresh failed."
         }
-    }
+    }    
 
     [PSCustomObject] Get([string]$endpoint) {
         $this.WriteVerboseOutput("[NCRESTAPI] GET: Preparing to make GET request to $endpoint.")
         $this.WriteVerboseOutput("[NCRESTAPI] GET: Ensuring current tokens are valid.")
         $this.EnsureValidToken()
+    
+        # Decrypt tokens before use
+        $this.DecryptTokens()
+    
         $url = "$($this.BaseUrl)/$endpoint"
         $headers = @{
             'Accept'        = '*/*'
@@ -235,12 +302,16 @@ class NCRestAPI {
             $this.WriteVerboseOutput("[NCRESTAPI] GET: request failed: $($_.Exception.Message)")
             return $null
         }
-    }
+    }    
 
     [PSCustomObject] Post([string]$endpoint, [PSCustomObject]$body) {
         $this.WriteVerboseOutput("[NCRESTAPI] POST: Preparing to make POST request to $endpoint.")
         $this.WriteVerboseOutput("[NCRESTAPI] POST: Ensuring current tokens are valid.")
         $this.EnsureValidToken()
+    
+        # Decrypt tokens before use
+        $this.DecryptTokens()
+    
         $url = "$($this.BaseUrl)/$endpoint"
         $headers = @{
             'Accept'        = '*/*'
@@ -259,12 +330,16 @@ class NCRestAPI {
             $this.WriteVerboseOutput("[NCRESTAPI] POST: request failed: $($_.Exception.Message)")
             return $null
         }
-    }
+    }    
 
     [PSCustomObject] Put([string]$endpoint, [string]$body) {
         $this.WriteVerboseOutput("[NCRESTAPI] PUT: Preparing to make PUT request to $endpoint.")
         $this.writeverboseoutput("[NCRESTAPI] PUT: Ensuring current tokens are valid.")
         $this.EnsureValidToken()
+    
+        # Decrypt tokens before use
+        $this.DecryptTokens()
+    
         $url = "$($this.BaseUrl)/$endpoint"
         $headers = @{
             'Accept'        = '*/*'
@@ -283,12 +358,16 @@ class NCRestAPI {
             $this.WriteVerboseOutput("[NCRESTAPI] PUT: request failed: $($_.Exception.Message)")
             return $null
         }
-    }
+    }    
 
     [PSCustomObject] Delete([string]$endpoint) {
         $this.WriteVerboseOutput("[NCRESTAPI] DELETE: Preparing to make DELETE request to $endpoint.")
         $this.WriteVerboseOutput("[NCRESTAPI] DELETE: Ensuring current tokens are valid.")
         $this.EnsureValidToken()
+    
+        # Decrypt tokens before use
+        $this.DecryptTokens()
+    
         $url = "$($this.BaseUrl)/$endpoint"
         $headers = @{
             'Accept'        = '*/*'
@@ -307,4 +386,4 @@ class NCRestAPI {
             return $null
         }
     }
-}
+}    
