@@ -1,0 +1,44 @@
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
+
+# Ignore node_modules
+node_modules/
+
+# Ignore logs
+logs
+*.log
+npm-debug.log*
+
+# Ignore build and dependency directories
+dist/
+build/
+
+# Ignore environment variable files
+.env
+.env.local
+.env.*.local
+
+# Ignore editor directories and files
+.vscode/
+.idea/
+*.swp
+
+# Ignore coverage reports
+coverage/
+*.lcov
+
+# Ignore package-lock
+package-lock.json
+yarn.lock
+
+# Ignore compiled files
+*.out
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Ignore Tests folder
+Tests/
