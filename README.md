@@ -72,11 +72,11 @@ Get-Help Get-NCCustomers -examples
 | Access Groups        | GET    | /api/access-groups                                                                        | Get-NCAccessGroups          | ✅                                                    |
 | Access Groups        | GET    | /api/access-groups/{accessGroupId}                                                        | Get-NCAccessGroups          | ✅                                                    |
 | Active Issues        | GET    | /api/org-nits/{orgUnitId}/active-issues                                                   | Get-NCActiveIssues          | ✅                                                    |
-| API-Service          | POST   | /api/server-info/exra/authenticated                                                       | Get-NCRestInfo              | ❌                                                    |
-| API-Service          | GET    | /api                                                                                      | Get-NCRestInfo              | ✅                                                    |
-| API-Service          | GET    | /api/server-info                                                                          | Get-NCRestInfo              | ✅                                                    |
-| API-Service          | GET    | /api/server-info/extra                                                                    | Get-NCRestInfo              | ✅                                                    |
-| API-Service          | GET    | /api/health                                                                               | Get-NCRestInfo              | ✅                                                    |
+| API-Service          | POST   | /api/server-info/exra/authenticated                                                       | Get-NCServerInfo              | ❌                                                    |
+| API-Service          | GET    | /api                                                                                      | Get-NCServerInfo              | ✅                                                    |
+| API-Service          | GET    | /api/server-info                                                                          | Get-NCServerInfo              | ✅                                                    |
+| API-Service          | GET    | /api/server-info/extra                                                                    | Get-NCServerInfo              | ✅                                                    |
+| API-Service          | GET    | /api/health                                                                               | Get-NCServerInfo              | ✅                                                    |
 | Custom Properties    | PUT    | /api/org-units/{orgUnitId}/org-custom-property-defaults                                   | Set-NCDefaultOrgProperty    | ✅ |
 | Custom Properties    | GET    | /api/org-units/{orgUnitId}/custom-properties/{propertyId}                                 | Get-NCOrgProperty           | ✅                                                    |
 | Custom Properties    | PUT    | /api/org-units/{orgUnitId}/custom-properties/{propertyId}                                 | Set-NCOrgProperty           | ✅ |
