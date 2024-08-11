@@ -83,6 +83,7 @@ function Get-NCDevices {
     $api = $global:NCRestApiInstance
 
     Write-Verbose "[FUNCTION] Running Get-NCDevices."
+    $Method = "GET"
 
     function Get-Endpoint {
         param (
@@ -93,15 +94,15 @@ function Get-NCDevices {
 
         if ($deviceId) {
             Write-Verbose "[FUNCTION] Retrieving device with deviceID: $deviceId."
-            $endpoint = "api/devices/$deviceId"
+            $endpoint = "/api/devices/$deviceId"
         }
         elseif ($orgUnitID) {
             Write-Verbose "[FUNCTION] Retrieving devices for orgUnitId: $orgUnitId."
-            $endpoint = "api/org-units/$orgUnitId/devices"
+            $endpoint = "/api/org-units/$orgUnitId/devices"
         }
         else {
             Write-Verbose "[FUNCTION] Retrieving all devices."
-            $endpoint = "api/devices"
+            $endpoint = "/api/devices"
         }
 
         if ($QueryParameters.Count) {
@@ -139,9 +140,9 @@ function Get-NCDevices {
     try {
         if (-not $orgUnitId -and -not $deviceId) {
             Write-Verbose "[FUNCTION] No orgUnitiD or DeviceID provided, retrieving list of devices for orgUnitId 1."
-
+            $endpoint = "/api/org-units/1/devices"
             try {
-                $devices = $api.Get("api/org-units/1/devices")
+                $devices = $api.NCRestRequest($Method,$endpoint,$null)
                 return $devices
             }
             catch {
@@ -156,7 +157,7 @@ function Get-NCDevices {
         $endpoint = Get-Endpoint -orgUnitId $orgUnitId -DeviceID $deviceId -QueryParameters $queryParameters
 
         Write-Verbose "[FUNCTION] Retrieving devices from endpoint: $endpoint."
-        $data = $api.Get($endpoint)
+        $data = $api.NCRestRequest($Method,$endpoint,$null)
         return $data
     }
     catch {
