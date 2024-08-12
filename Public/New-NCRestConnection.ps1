@@ -35,10 +35,10 @@ function New-NCRestConnection {
         [string]$ApiToken,
 
         [Parameter(Mandatory = $false)]
-        [string]$AccessTokenExpiration = "120s",
+        [string]$AccessTokenHeader = "120s",
 
         [Parameter(Mandatory = $false)]
-        [string]$RefreshTokenExpiration = "25h"
+        [string]$RefreshTokenHeader = "25h"
     )
 
     # Validate and correct ServerUrl
@@ -63,18 +63,18 @@ function New-NCRestConnection {
     
     Write-Verbose "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') RestConfig: Configuration set: ServerUrl and ApiToken Added"
 
-    if ($AccessTokenExpiration) {
-        Write-Verbose "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') RestConfig: Setting environment variable for AccessTokenExpiration."
-        [System.Environment]::SetEnvironmentVariable('AccessTokenExpiration', $AccessTokenExpiration, [System.EnvironmentVariableTarget]::Process)
+    if ($AccessTokenHeader) {
+        Write-Verbose "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') RestConfig: Setting environment variable for AccessTokenHeader."
+        [System.Environment]::SetEnvironmentVariable('AccessTokenHeader', $AccessTokenHeader, [System.EnvironmentVariableTarget]::Process)
     } else {
-        Write-Warning "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') RestConfig: AccessTokenExpiration must be in the format '120s'."
+        Write-Warning "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') RestConfig: AccessTokenHeader must be in the format '120s'."
     }
 
-    if ($RefreshTokenExpiration) {
-        Write-Verbose "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') RestConfig: Setting environment variable for RefreshTokenExpiration."
-        [System.Environment]::SetEnvironmentVariable('RefreshTokenExpiration', $RefreshTokenExpiration, [System.EnvironmentVariableTarget]::Process)
+    if ($RefreshTokenHeader) {
+        Write-Verbose "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') RestConfig: Setting environment variable for RefreshTokenHeader."
+        [System.Environment]::SetEnvironmentVariable('RefreshTokenHeader', $RefreshTokenHeader, [System.EnvironmentVariableTarget]::Process)
     } else {
-        Write-Warning "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') RestConfig: RefreshTokenExpiration must be in the format '25h'."
+        Write-Warning "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') RestConfig: RefreshTokenHeader must be in the format '25h'."
     }
 
     Write-Verbose "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') RestConfig: Creating global NCRestAPI instance."

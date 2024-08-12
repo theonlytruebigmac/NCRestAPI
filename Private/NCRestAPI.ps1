@@ -1,23 +1,24 @@
 class NCRestAPI {
     [string]$ServerUrl
     [string]$NCVersion
-    [string]$AccessTokenExpiration
-    [string]$RefreshTokenExpiration
+    [string]$AccessTokenHeader
+    [datetime]$accessTokenExpiry
+    [string]$RefreshTokenHeader
+    [datetime]$refreshTokenExpiry
     [string]$ApiToken
     [string]$AccessToken
     [string]$RefreshToken
-
-    hidden [bool]$Verbose
+    [bool]$Verbose
 
     NCRestAPI([bool]$verbose = $false) {
-        $this.ServerUrl = $this.GetEnvVariable('NcentralServerUrl')
-        $this.ApiToken = $this.GetEnvVariable('NcentralApiToken')
-        $this.AccessToken = $this.GetEnvVariable('NcentralAccessToken')
-        $this.RefreshToken = $this.GetEnvVariable('NcentralRefreshToken')
-        $this.AccessTokenExpiration = $this.GetEnvVariable('AccessTokenExpiration')
-        $this.RefreshTokenExpiration = $this.GetEnvVariable('RefreshTokenExpiration')
-        $this.Verbose = $verbose
-        $this.NCVersion = $null
+        $this.ServerUrl              = $this.GetEnvVariable('NcentralServerUrl')
+        $this.ApiToken               = $this.GetEnvVariable('NcentralApiToken')
+        $this.AccessToken            = $this.GetEnvVariable('NcentralAccessToken')
+        $this.RefreshToken           = $this.GetEnvVariable('NcentralRefreshToken')
+        $this.AccessTokenHeader  = $this.GetEnvVariable('AccessTokenHeader')
+        $this.RefreshTokenHeader = $this.GetEnvVariable('RefreshTokenHeader')
+        $this.Verbose                = $verbose
+        $this.NCVersion              = $null
     
         $this.WriteVerboseOutput("Initializing: Decrypting Stored API Token from Config.")
         $this.DecryptTokens()
@@ -33,10 +34,6 @@ class NCRestAPI {
         }
     }
 
-    [string] GetEnvVariable([string]$name) {
-        return [System.Environment]::GetEnvironmentVariable($name, [System.EnvironmentVariableTarget]::Process)
-    }
-
     [void] WriteVerboseOutput([string]$message) {
         $maskedMessage = $message -replace '(Bearer\s+\w+\.[\w-]+\.[\w-]+)', 'Bearer [MASKED]' `
             -replace '(token"\s*:\s*"\w+\.[\w-]+\.[\w-]+)', 'token": "[MASKED]' `
@@ -46,26 +43,52 @@ class NCRestAPI {
         }
     }
 
-    hidden [string] GetNCVersion() {
-        if (-not $this.NCVersion) {
-            $this.WriteVerboseOutput("GetNCVersion: Getting N-central Version.")
-            $versionInfo = ($this.NCRestRequest("GET", "/api/server-info/extra", $null)._extra | Select-Object -ExpandProperty "Installation: UI Product Version").tostring()
-            
-            if ($versionInfo) {
-                $this.NCVersion = $versionInfo
-                $this.WriteVerboseOutput("GetNCVersion: NCVersion updated to: $($this.NCVersion)")
+    [void] Authenticate() {
+        $this.WriteVerboseOutput("Authenticate: Starting authentication process.")
+        $url = "$($this.ServerUrl)/api/auth/authenticate"
+        $this.DecryptTokens()
+        $headers                  = @{}
+        $headers['Accept']        = '*/*'
+        $headers['Authorization'] = "Bearer $($this.ApiToken)"
+
+        if ($this.RefreshTokenHeader -and $this.AccessTokenHeader) {
+            $headers['X-REFRESH-EXPIRY-OVERRIDE'] = "$($this.RefreshTokenHeader)"
+            $headers['X-ACCESS-EXPIRY-OVERRIDE']  = "$($this.AccessTokenHeader)"
+            $this.WriteVerboseOutput("Authenticate: Refresh and Access Token expiration set. Access token: $($this.AccessTokenHeader), Refresh token: $($this.RefreshTokenHeader)")
+        }
+        elseif ($this.RefreshTokenHeader) {
+            $headers['X-REFRESH-EXPIRY-OVERRIDE'] = "$($this.RefreshTokenHeader)"
+            $this.WriteVerboseOutput("Authenticate: Refresh Token expiration set. Refresh token: $($this.RefreshTokenHeader)")
+        }
+        elseif ($this.AccessTokenHeader) {
+            $headers['X-ACCESS-EXPIRY-OVERRIDE'] = "$($this.AccessTokenHeader)"
+            $this.WriteVerboseOutput("Authenticate: Access Token expiration set. Access token: $($this.AccessTokenHeader)")
+        }
+
+        $this.WriteVerboseOutput("Authenticate: URL: $($url)")
+        $this.WriteVerboseOutput("Authenticate: Headers: $($headers | ConvertTo-Json)")
+        try {
+            $response = Invoke-RestMethod -Uri $url -Headers $headers -Method Post -Body ''
+            $this.WriteVerboseOutput("Authenticate: Response: $($response | ConvertTo-Json -Depth 5)")
+            if ($response.tokens -and $response.tokens.access.token) {
+                $this.accessTokenExpiry = Get-Date (Get-date).addseconds($response.tokens.access.expiryseconds)
+                $this.refreshTokenExpiry = Get-Date (Get-date).addseconds($response.tokens.refresh.expiryseconds)
+                $this.StoreTokens($response.tokens.access.token, $response.tokens.refresh.token)
+                $this.EncryptTokens()
             }
             else {
-                $this.WriteVerboseOutput("GetNCVersion: Failed to retrieve NCVersion.")
+                throw "Authenticate: Authentication response did not contain an access token."
             }
         }
-    
-        return $this.NCVersion
-    }    
+        catch {
+            $this.WriteVerboseOutput("Authenticate: Authentication failed: $($_.Exception.Message)")
+            throw $_.Exception.Message
+        }
+    } 
 
     [void] StoreTokens([string]$accessToken, [string]$refreshToken) {
         $this.WriteVerboseOutput("StoreTokens: Storing access and refresh tokens.")
-        $this.AccessToken = $this.EncryptToken($accessToken)
+        $this.AccessToken  = $this.EncryptToken($accessToken)
         $this.RefreshToken = $this.EncryptToken($refreshToken)
 
         $this.WriteVerboseOutput("StoreTokens: Setting environment variables for encrypted access and refresh tokens.")
@@ -90,66 +113,22 @@ class NCRestAPI {
     }
 
     [void] DecryptTokens() {
-        $this.ApiToken = $this.DecryptToken($this.ApiToken)
-        $this.AccessToken = $this.DecryptToken($this.AccessToken)
+        $this.ApiToken     = $this.DecryptToken($this.ApiToken)
+        $this.AccessToken  = $this.DecryptToken($this.AccessToken)
         $this.RefreshToken = $this.DecryptToken($this.RefreshToken)
     }
 
     [void] EncryptTokens() {
-        $this.ApiToken = $this.EncryptToken($this.ApiToken)
-        $this.AccessToken = $this.EncryptToken($this.AccessToken)
+        $this.ApiToken     = $this.EncryptToken($this.ApiToken)
+        $this.AccessToken  = $this.EncryptToken($this.AccessToken)
         $this.RefreshToken = $this.EncryptToken($this.RefreshToken)
     }
-
-    [void] Authenticate() {
-        $this.WriteVerboseOutput("Authenticate: Starting authentication process.")
-        $url = "$($this.ServerUrl)/api/auth/authenticate"
-        
-        $this.DecryptTokens()
-
-        $headers = @{
-            'Accept'        = '*/*'
-            'Authorization' = "Bearer $($this.ApiToken)"
-        }
-
-        if ($this.RefreshTokenExpiration -and $this.AccessTokenExpiration) {
-            $headers['X-REFRESH-EXPIRY-OVERRIDE'] = "$($this.RefreshTokenExpiration)"
-            $headers['X-ACCESS-EXPIRY-OVERRIDE'] = "$($this.AccessTokenExpiration)"
-            $this.WriteVerboseOutput("Authenticate: Refresh and Access Token expiration set. Access token: $($this.AccessTokenExpiration), Refresh token: $($this.RefreshTokenExpiration)")
-        }
-        elseif ($this.RefreshTokenExpiration) {
-            $headers['X-REFRESH-EXPIRY-OVERRIDE'] = "$($this.RefreshTokenExpiration)"
-            $this.WriteVerboseOutput("Authenticate: Refresh Token expiration set. Refresh token: $($this.RefreshTokenExpiration)")
-        }
-        elseif ($this.AccessTokenExpiration) {
-            $headers['X-ACCESS-EXPIRY-OVERRIDE'] = "$($this.AccessTokenExpiration)"
-            $this.WriteVerboseOutput("Authenticate: Access Token expiration set. Access token: $($this.AccessTokenExpiration)")
-        }
-    
-        $this.WriteVerboseOutput("Authenticate: URL: $($url)")
-        $this.WriteVerboseOutput("Authenticate: Headers: $($headers | ConvertTo-Json)")
-        try {
-            $response = Invoke-RestMethod -Uri $url -Headers $headers -Method Post -Body ''
-            $this.WriteVerboseOutput("Authenticate: Response: $($response | ConvertTo-Json -Depth 5)")
-            if ($response.tokens -and $response.tokens.access.token) {
-                $this.StoreTokens($response.tokens.access.token, $response.tokens.refresh.token)
-                $this.EncryptTokens()
-            }
-            else {
-                throw "Authenticate: Authentication response did not contain an access token."
-            }
-        }
-        catch {
-            $this.WriteVerboseOutput("Authenticate: Authentication failed: $($_.Exception.Message)")
-            throw $_.Exception.Message
-        }
-    }    
 
     [bool] ValidateToken() {
         $this.WriteVerboseOutput(" ValidateToken: Starting Token Validation process.")
         $this.DecryptTokens()
-    
-        $url = "$($this.ServerUrl)/api/auth/validate"
+
+        $url     = "$($this.ServerUrl)/api/auth/validate"
         $headers = @{
             'Accept'        = '*/*'
             'Authorization' = "Bearer $($this.AccessToken)"
@@ -170,6 +149,60 @@ class NCRestAPI {
         }
     }
 
+    [void] RefreshAccessToken() {
+        $this.WriteVerboseOutput("RefreshAccessToken: Starting token refresh process.")
+
+        if ($this.RefreshToken -match '^Secure:') {
+            $this.WriteVerboseOutput("[NCRESTAPI] RefreshAccessToken: Decrypting RefreshToken.")
+            $encryptedToken = $this.RefreshToken.Substring(7)
+            $this.RefreshToken = [System.Text.Encoding]::Unicode.GetString([Convert]::FromBase64String($encryptedToken))
+        }
+    
+        $url = "$($this.ServerUrl)/api/auth/refresh"
+        $headers = @{}
+        $headers['Accept']        = '*/*'
+        $headers['Authorization'] = "Bearer $($this.RefreshToken)"
+        $headers['Content-Type']  = 'text/plain'
+
+        if ($this.RefreshTokenHeader -and $this.AccessTokenHeader) {
+            $headers['X-REFRESH-EXPIRY-OVERRIDE'] = "$($this.RefreshTokenHeader)"
+            $headers['X-ACCESS-EXPIRY-OVERRIDE']  = "$($this.AccessTokenHeader)"
+            $this.WriteVerboseOutput("Authenticate: Refresh and Access Token expiration set. Access token: $($this.AccessTokenHeader), Refresh token: $($this.RefreshTokenHeader)")
+        }
+        elseif ($this.RefreshTokenHeader) {
+            $headers['X-REFRESH-EXPIRY-OVERRIDE'] = "$($this.RefreshTokenHeader)"
+            $this.WriteVerboseOutput("Authenticate: Refresh Token expiration set. Refresh token: $($this.RefreshTokenHeader)")
+        }
+        elseif ($this.AccessTokenHeader) {
+            $headers['X-ACCESS-EXPIRY-OVERRIDE'] = "$($this.AccessTokenHeader)"
+            $this.WriteVerboseOutput("Authenticate: Access Token expiration set. Access token: $($this.AccessTokenHeader)")
+        }
+
+        $body = $this.RefreshToken
+
+        $this.WriteVerboseOutput("RefreshAccessToken: URL: $url")
+        $this.WriteVerboseOutput("RefreshAccessToken: Headers: $($headers | ConvertTo-Json)")
+        $this.WriteVerboseOutput("RefreshAccessToken: Body: [MASKED]")
+
+        try {
+            $response = Invoke-RestMethod -Uri $url -Headers $headers -Method Post -Body $body
+            $this.WriteVerboseOutput("RefreshAccessToken: Refresh Response: $($response | ConvertTo-Json -Depth 5)")
+            if ($response.tokens -and $response.tokens.access.token) {
+                $this.WriteVerboseOutput("RefreshAccessToken: Access token refreshed.")
+                $this.accessTokenExpiry = Get-Date (Get-date).addseconds($response.tokens.access.expiryseconds)
+                $this.refreshTokenExpiry = Get-Date (Get-date).addseconds($response.tokens.refresh.expiryseconds)
+                $this.StoreTokens($response.tokens.access.token, $response.tokens.refresh.token)
+            }
+            else {
+                throw "RefreshAccessToken: Refresh response did not contain an access token."
+            }
+        }
+        catch {
+            $this.WriteVerboseOutput("RefreshAccessToken: Token refresh failed: $($_.Exception.Message)")
+            throw $_.Exception.Message
+        }
+    }
+
     [void] EnsureValidToken() {
         $this.WriteVerboseOutput(" EnsureValidToken: Checking if Access Token is still valid.")
         
@@ -178,16 +211,37 @@ class NCRestAPI {
         if (-not $this.AccessToken) {
             throw " EnsureValidToken: No access token. Authentication failed."
         }
-    
+
         if (-not $this.ValidateToken()) {
             $this.WriteVerboseOutput(" EnsureValidToken: Token validation failed. Refreshing token.")
             $this.RefreshAccessToken()
             $this.EncryptTokens()
         }
-    
+
         if (-not $this.AccessToken) {
             throw " EnsureValidToken: No access token. Refresh failed."
         }
+    }
+
+    [string] GetEnvVariable([string]$name) {
+        return [System.Environment]::GetEnvironmentVariable($name, [System.EnvironmentVariableTarget]::Process)
+    }
+
+    hidden [string] GetNCVersion() {
+        if (-not $this.NCVersion) {
+            $this.WriteVerboseOutput("GetNCVersion: Getting N-central Version.")
+            $versionInfo = ($this.NCRestRequest("GET", "/api/server-info/extra", $null)._extra | Select-Object -ExpandProperty "Installation: UI Product Version").tostring()
+            
+            if ($versionInfo) {
+                $this.NCVersion = $versionInfo
+                $this.WriteVerboseOutput("GetNCVersion: NCVersion updated to: $($this.NCVersion)")
+            }
+            else {
+                $this.WriteVerboseOutput("GetNCVersion: Failed to retrieve NCVersion.")
+            }
+        }
+    
+        return $this.NCVersion
     }    
 
     [PSCustomObject] NCRestRequest([string]$method, [string]$endpoint, [PSCustomObject]$body = $null) {
@@ -196,7 +250,7 @@ class NCRestAPI {
     
         $this.DecryptTokens()
     
-        $url = "$($this.ServerUrl)$endpoint"
+        $url     = "$($this.ServerUrl)$endpoint"
         $headers = @{
             'Accept'        = '*/*'
             'Authorization' = "Bearer $($this.AccessToken)"
@@ -227,5 +281,4 @@ class NCRestAPI {
             return $null
         }
     }
-    
 }

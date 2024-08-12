@@ -76,6 +76,7 @@ function Get-NCAccessGroups {
     }
 
     $api = $global:NCRestApiInstance
+    $Method = "GET"
 
     Write-Verbose "[FUNCTION] Running Get-NCAccessGroups."
     $providedParams = @($OrgUnitId, $AccessGroupId) | Where-Object { $_ }
@@ -86,11 +87,11 @@ function Get-NCAccessGroups {
 
     if (-not $AccessGroupId) {
         Write-Verbose "[FUNCTION] AccessGroupId is not provided. Retrieving access groups for orgUnitId: $orgUnitId."
-        $endpoint = "api/org-units/$orgUnitId/access-groups"
+        $endpoint = "/api/org-units/$orgUnitId/access-groups"
     }
     else {
         Write-Verbose "[FUNCTION] AccessGroupId is provided. Retrieving access groups for AccessGroupID $AccessGroupId."
-        $endpoint = "api/access-groups/$AccessGroupId"
+        $endpoint = "/api/access-groups/$AccessGroupId"
     }    
  
     $queryParameters = @{}
@@ -114,7 +115,7 @@ function Get-NCAccessGroups {
 
     try {
         Write-Verbose "[FUNCTION] Retrieving access groups data from $endpoint."
-        $data = $api.Get($endpoint)
+        $data = $api.NCRestRequest($Method,$endpoint,$null)
         return $data
     }
     catch {
