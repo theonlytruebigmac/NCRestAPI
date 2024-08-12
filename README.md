@@ -62,6 +62,12 @@ Get-NCDevices -Verbose
 Get-Help Get-NCCustomers -examples
 ```
 
+3. See the modules current configuration settings and optionally kill NCRestAPI session.
+
+```powershell
+Get-NCRestApiInfo -kill
+```
+
 ## N-Central Rest API Endpoints
 
 | N-central Operations | Method | Endpoint                                                                                  | Command                     | Created                                               |

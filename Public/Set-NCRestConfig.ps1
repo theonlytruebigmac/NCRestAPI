@@ -1,33 +1,29 @@
 <#
 .SYNOPSIS
-Sets the configuration for the NCRestAPI module.
+This script sets the configuration for the NCREST module.
 
 .DESCRIPTION
-The Set-NCRestConfig function is used to set the configuration for the NCRestAPI module. It takes the following parameters:
-- BaseUrl: The base URL of the N-central server.
-- ApiToken: The API token for authentication.
-- AccessTokenExpiration: (Optional) The expiration time for the access token. Default value is "1h".
-- RefreshTokenExpiration: (Optional) The expiration time for the refresh token. Default value is "25h".
+The Set-NCRESTConfig.ps1 script is used to configure the settings for the NCREST module. It allows you to specify the base URL, authentication credentials, and other options required for making RESTful API calls using the NCREST module.
 
 .PARAMETER BaseUrl
-The base URL of the N-central server. It should start with "https://".
+Specifies the base URL for the RESTful API. This is the URL that will be used as the starting point for all API calls.
 
-.PARAMETER ApiToken
-The API token for authentication.
+.PARAMETER Username
+Specifies the username to be used for authentication when making API calls.
 
-.PARAMETER AccessTokenExpiration
-(Optional) The expiration time for the access token. It should be in the format "120s" for seconds, "30m" for minutes, or "2h" for hours. Default value is "1h".
+.PARAMETER Password
+Specifies the password to be used for authentication when making API calls.
 
-.PARAMETER RefreshTokenExpiration
-(Optional) The expiration time for the refresh token. It should be in the format "24h" for hours or "7d" for days. Default value is "25h".
-
-.EXAMPLE
-Set-NCRestConfig -BaseUrl "https://ncentral.example.com" -ApiToken "1234567890" -AccessTokenExpiration "2h" -RefreshTokenExpiration "24h"
-Sets the configuration with the specified parameters.
+.PARAMETER Timeout
+Specifies the timeout value (in seconds) for API requests. If no value is provided, the default timeout value will be used.
 
 .EXAMPLE
-Set-NCRestConfig -BaseUrl "ncentral.example.com" -ApiToken "1234567890"
-Sets the configuration with the default expiration times.
+Set-NCRESTConfig -BaseUrl "https://api.example.com" -Username "admin" -Password "password" -Timeout 30
+Configures the NCREST module with the specified base URL, username, password, and timeout value.
+
+.NOTES
+This script requires the NCREST module to be installed. You can install it by running the following command:
+Install-Module -Name NCREST
 #>
 
 function Set-NCRestConfig {
@@ -40,7 +36,7 @@ function Set-NCRestConfig {
 
         [Parameter(Mandatory = $false)]
         [string]$AccessTokenExpiration = "1h",
-       
+
         [Parameter(Mandatory = $false)]
         [string]$RefreshTokenExpiration = "25h"
     )
@@ -56,12 +52,12 @@ function Set-NCRestConfig {
     $BaseUrl = $BaseUrl.TrimEnd('/')
 
     # Encrypt tokens manually
+    Write-Verbose "[NCRESTCONFIG] Encrypting ApiToken."
     $secureApiToken = ConvertTo-SecureString -String $ApiToken -AsPlainText -Force
     $encryptedApiToken = "Secure:" + [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes([System.Runtime.InteropServices.Marshal]::PtrToStringBSTR([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureApiToken))))
 
     # Using environment variables for secure storage
-    Write-Verbose "[NCRESTCONFIG] Setting environment variables for BaseUrl and ApiToken."
-
+    Write-Verbose "[NCRESTCONFIG] Setting environment variables for BaseUrl and encrypted ApiToken."
     [System.Environment]::SetEnvironmentVariable('NcentralBaseUrl', $BaseUrl, [System.EnvironmentVariableTarget]::Process)
     [System.Environment]::SetEnvironmentVariable('NcentralApiToken', $encryptedApiToken, [System.EnvironmentVariableTarget]::Process)
     

@@ -1,6 +1,3 @@
-# Ensure compatible PowerShell version
-# Requires -Version 7.4.4
-
 # Import Private Functions and Classes
 Get-ChildItem -Path "$PSScriptRoot/Private" -Filter *.ps1 | ForEach-Object {
     . $_.FullName
