@@ -11,14 +11,14 @@ class NCRestAPI {
     [bool]$Verbose
 
     NCRestAPI([bool]$verbose = $false) {
-        $this.ServerUrl              = $this.GetEnvVariable('NcentralServerUrl')
-        $this.ApiToken               = $this.GetEnvVariable('NcentralApiToken')
-        $this.AccessToken            = $this.GetEnvVariable('NcentralAccessToken')
-        $this.RefreshToken           = $this.GetEnvVariable('NcentralRefreshToken')
-        $this.AccessTokenHeader  = $this.GetEnvVariable('AccessTokenHeader')
+        $this.ServerUrl = $this.GetEnvVariable('NcentralServerUrl')
+        $this.ApiToken = $this.GetEnvVariable('NcentralApiToken')
+        $this.AccessToken = $this.GetEnvVariable('NcentralAccessToken')
+        $this.RefreshToken = $this.GetEnvVariable('NcentralRefreshToken')
+        $this.AccessTokenHeader = $this.GetEnvVariable('AccessTokenHeader')
         $this.RefreshTokenHeader = $this.GetEnvVariable('RefreshTokenHeader')
-        $this.Verbose                = $verbose
-        $this.NCVersion              = $null
+        $this.Verbose = $verbose
+        $this.NCVersion = $null
     
         $this.WriteVerboseOutput("Initializing: Decrypting Stored API Token from Config.")
         $this.DecryptTokens()
@@ -47,13 +47,14 @@ class NCRestAPI {
         $this.WriteVerboseOutput("Authenticate: Starting authentication process.")
         $url = "$($this.ServerUrl)/api/auth/authenticate"
         $this.DecryptTokens()
-        $headers                  = @{}
-        $headers['Accept']        = '*/*'
-        $headers['Authorization'] = "Bearer $($this.ApiToken)"
+
+        $headers = @{}
+        $headers.Accept = '*/*'
+        $headers.Authorization = "Bearer $($this.ApiToken)"
 
         if ($this.RefreshTokenHeader -and $this.AccessTokenHeader) {
             $headers['X-REFRESH-EXPIRY-OVERRIDE'] = "$($this.RefreshTokenHeader)"
-            $headers['X-ACCESS-EXPIRY-OVERRIDE']  = "$($this.AccessTokenHeader)"
+            $headers['X-ACCESS-EXPIRY-OVERRIDE'] = "$($this.AccessTokenHeader)"
             $this.WriteVerboseOutput("Authenticate: Refresh and Access Token expiration set. Access token: $($this.AccessTokenHeader), Refresh token: $($this.RefreshTokenHeader)")
         }
         elseif ($this.RefreshTokenHeader) {
@@ -88,7 +89,7 @@ class NCRestAPI {
 
     [void] StoreTokens([string]$accessToken, [string]$refreshToken) {
         $this.WriteVerboseOutput("StoreTokens: Storing access and refresh tokens.")
-        $this.AccessToken  = $this.EncryptToken($accessToken)
+        $this.AccessToken = $this.EncryptToken($accessToken)
         $this.RefreshToken = $this.EncryptToken($refreshToken)
 
         $this.WriteVerboseOutput("StoreTokens: Setting environment variables for encrypted access and refresh tokens.")
@@ -113,14 +114,14 @@ class NCRestAPI {
     }
 
     [void] DecryptTokens() {
-        $this.ApiToken     = $this.DecryptToken($this.ApiToken)
-        $this.AccessToken  = $this.DecryptToken($this.AccessToken)
+        $this.ApiToken = $this.DecryptToken($this.ApiToken)
+        $this.AccessToken = $this.DecryptToken($this.AccessToken)
         $this.RefreshToken = $this.DecryptToken($this.RefreshToken)
     }
 
     [void] EncryptTokens() {
-        $this.ApiToken     = $this.EncryptToken($this.ApiToken)
-        $this.AccessToken  = $this.EncryptToken($this.AccessToken)
+        $this.ApiToken = $this.EncryptToken($this.ApiToken)
+        $this.AccessToken = $this.EncryptToken($this.AccessToken)
         $this.RefreshToken = $this.EncryptToken($this.RefreshToken)
     }
 
@@ -128,7 +129,7 @@ class NCRestAPI {
         $this.WriteVerboseOutput(" ValidateToken: Starting Token Validation process.")
         $this.DecryptTokens()
 
-        $url     = "$($this.ServerUrl)/api/auth/validate"
+        $url = "$($this.ServerUrl)/api/auth/validate"
         $headers = @{
             'Accept'        = '*/*'
             'Authorization' = "Bearer $($this.AccessToken)"
@@ -160,13 +161,13 @@ class NCRestAPI {
     
         $url = "$($this.ServerUrl)/api/auth/refresh"
         $headers = @{}
-        $headers['Accept']        = '*/*'
+        $headers['Accept'] = '*/*'
         $headers['Authorization'] = "Bearer $($this.RefreshToken)"
-        $headers['Content-Type']  = 'text/plain'
+        $headers['Content-Type'] = 'text/plain'
 
         if ($this.RefreshTokenHeader -and $this.AccessTokenHeader) {
             $headers['X-REFRESH-EXPIRY-OVERRIDE'] = "$($this.RefreshTokenHeader)"
-            $headers['X-ACCESS-EXPIRY-OVERRIDE']  = "$($this.AccessTokenHeader)"
+            $headers['X-ACCESS-EXPIRY-OVERRIDE'] = "$($this.AccessTokenHeader)"
             $this.WriteVerboseOutput("Authenticate: Refresh and Access Token expiration set. Access token: $($this.AccessTokenHeader), Refresh token: $($this.RefreshTokenHeader)")
         }
         elseif ($this.RefreshTokenHeader) {
@@ -205,7 +206,6 @@ class NCRestAPI {
 
     [void] EnsureValidToken() {
         $this.WriteVerboseOutput(" EnsureValidToken: Checking if Access Token is still valid.")
-        
         $this.DecryptTokens()
         
         if (-not $this.AccessToken) {
@@ -242,20 +242,21 @@ class NCRestAPI {
         }
     
         return $this.NCVersion
-    }    
+    }
 
     [PSCustomObject] NCRestRequest([string]$method, [string]$endpoint, [PSCustomObject]$body = $null) {
         $this.WriteVerboseOutput(" NCRestRequest: Preparing to make $method request to $endpoint.")
         $this.EnsureValidToken()
-    
         $this.DecryptTokens()
     
-        $url     = "$($this.ServerUrl)$endpoint"
+        $url = "$($this.ServerUrl)$endpoint"
         $headers = @{
             'Accept'        = '*/*'
             'Authorization' = "Bearer $($this.AccessToken)"
             'Content-Type'  = 'application/json'
         }
+        $headers.Accept = '*/*'
+
     
         $this.WriteVerboseOutput(" NCRestRequest: URL: $url")
         $this.WriteVerboseOutput(" NCRestRequest: Headers: $($headers | ConvertTo-Json)")
