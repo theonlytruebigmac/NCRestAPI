@@ -26,27 +26,25 @@ Website: https://github.com/soybigmac/NCRestAPI
 
 function Get-NCApplianceTask {
     [CmdletBinding()]
+    [OutputType([pscustomobject])]
     param (
-        [Parameter(Mandatory = $true)]
-        [int]$taskId
+        [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName)]
+        [ValidateNotNullOrEmpty()]
+        [string]$taskId
     )
 
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
+    begin { $api = Get-NCRestApiInstance }
 
-    $api = $global:NCRestApiInstance
-    
+
+
+    process {
     Write-Verbose "[FUNCTION] Running Get-NCApplianceTask."
     $endpoint = "api/appliance-tasks/$taskId"
 
-    try {
         Write-Verbose "[FUNCTION] Retrieving appliance task data from endpoint $endpoint."
         $data = $api.Get($endpoint)
         return $data
-    }
-    catch {
-        Write-Error "Error retrieving appliance task information: $_"
+
+
     }
 }

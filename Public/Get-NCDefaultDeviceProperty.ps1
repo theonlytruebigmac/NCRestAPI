@@ -30,30 +30,29 @@ Website: https://github.com/soybigmac/NCRestAPI
 
 function Get-NCDefaultDeviceProperty {
     [CmdletBinding()]
+    [OutputType([pscustomobject])]
     param (
-        [Parameter(Mandatory = $true)]
-        [int]$OrgUnitId,
+        [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName)]
+        [ValidateNotNullOrEmpty()]
+        [string]$OrgUnitId,
 
         [Parameter(Mandatory = $true)]
-        [int]$PropertyId
+        [ValidateNotNullOrEmpty()]
+        [string]$PropertyId
     )
 
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
+    begin { $api = Get-NCRestApiInstance }
 
-    $api = $global:NCRestApiInstance
 
+
+    process {
     Write-Verbose "[FUNCTION] Running Get-NCDefaultDeviceProperty."
     $endpoint = "api/org-units/$orgUnitId/custom-properties/device-custom-property-defaults/$propertyId"
 
-    try {
         Write-Verbose "[FUNCTION] Retrieving default device property with endpoint: $endpoint."
         $response = $api.Get($endpoint)
         return $response
-    }
-    catch {
-        Write-Error "Error retrieving default device property: $_"
+
+
     }
 }

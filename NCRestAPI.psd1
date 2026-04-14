@@ -11,10 +11,10 @@
     RootModule = 'NCRestAPI.psm1'
     
     # Version number of this module.
-    ModuleVersion = '1.0.6'
+    ModuleVersion = '1.7.1'
     
     # Supported PSEditions
-    CompatiblePSEditions = @()
+    CompatiblePSEditions = @('Desktop', 'Core')
     
     # ID used to uniquely identify this module
     GUID = 'cbc42d71-e4d4-45be-8b9f-ac447e1e0d5c'
@@ -32,7 +32,7 @@
     Description = 'PowerShell module for interacting with N-able N-central REST API'
     
     # Minimum version of the PowerShell engine required by this module
-    # PowerShellVersion = ''
+    PowerShellVersion = '5.1'
     
     # Name of the PowerShell host required by this module
     # PowerShellHostName = ''
@@ -68,7 +68,64 @@
     # NestedModules = @()
     
     # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-    FunctionsToExport = '*'
+    FunctionsToExport = @(
+        'Connect-NCentral',
+        'Disconnect-NCentral',
+        'Get-NCAccessGroups',
+        'Get-NCApiLinks',
+        'Get-NCActiveIssues',
+        'Get-NCApplianceTask',
+        'Get-NCAssetLifecycle',
+        'Get-NCCustomers',
+        'Get-NCCustomPsaTicket',
+        'Get-NCDefaultDeviceProperty',
+        'Get-NCDefaultOrgProperty',
+        'Get-NCDeviceActivationKey',
+        'Get-NCDeviceAssets',
+        'Get-NCDeviceMaintenanceWindows',
+        'Get-NCDeviceProperty',
+        'Get-NCDeviceScheduledTasks',
+        'Get-NCDeviceServices',
+        'Get-NCDevices',
+        'Get-NCFilters',
+        'Get-NCJobStatus',
+        'Get-NCOrgProperty',
+        'Get-NCOrgUnits',
+        'Get-NCRegTokens',
+        'Get-NCReport',
+        'Get-NCRestApiInfo',
+        'Get-NCRestData',
+        'Get-NCScheduledTaskStatus',
+        'Get-NCScheduledTasks',
+        'Get-NCServerInfo',
+        'Get-NCServiceOrgs',
+        'Get-NCSites',
+        'Get-NCSoftwareInstallers',
+        'Get-NCStandardPsaCustomerMapping',
+        'Get-NCUserRoles',
+        'Get-NCUsers',
+        'New-NCCustomer',
+        'New-NCDevice',
+        'New-NCDeviceAccessGroup',
+        'New-NCMaintenanceWindows',
+        'New-NCOrgAccessGroup',
+        'New-NCPatchComparisonReport',
+        'New-NCScheduledTask',
+        'New-NCServiceOrg',
+        'New-NCSite',
+        'New-NCSoftwareDownloadLink',
+        'New-NCUserRole',
+        'Remove-NCDevice',
+        'Remove-NCMaintenanceWindows',
+        'Set-NCAssetLifecycle',
+        'Set-NCDefaultOrgProperty',
+        'Set-NCDeviceProperty',
+        'Set-NCMaintenanceWindows',
+        'Set-NCOrgProperty',
+        'Set-NCRestConfig',
+        'Test-NCStandardPsaCredential',
+        'Update-NCAssetLifecycle'
+    )
     
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
     #CmdletsToExport = @()
@@ -106,7 +163,7 @@
             # IconUri = ''
     
             # ReleaseNotes of this module
-            # ReleaseNotes = ''
+            ReleaseNotes = 'See CHANGELOG.md for 1.7.1 release notes.'
     
             # Prerelease string of this module
             # Prerelease = ''

@@ -43,15 +43,18 @@ Website: https://github.com/soybigmac/NCRestAPI
 #>
 
 function New-NCDeviceAccessGroup {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Mandatory = $true)]
-        [int]$OrgUnitId,
+        [ValidateNotNullOrEmpty()]
+        [string]$OrgUnitId,
 
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$GroupName,
 
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$GroupDescription,
         
         [string[]]$DeviceIds,
@@ -59,12 +62,7 @@ function New-NCDeviceAccessGroup {
         [string[]]$UserIds
     )
 
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
-
-    $api = $global:NCRestApiInstance
+    $api = Get-NCRestApiInstance
         
     Write-Verbose "[FUNCTION] Running New-NCDeviceAccessGroup."
     $body = [ordered]@{
@@ -76,12 +74,9 @@ function New-NCDeviceAccessGroup {
 
     $endpoint = "api/org-units/$orgUnitId/device-access-groups"
 
-    try {
         Write-Verbose "[FUNCTION] Creating new device access group with endpoint: $endpoint."
+        if (-not $PSCmdlet.ShouldProcess($groupName, 'Create device access group')) { return }
+
         $response = $api.Post($endpoint, $Body)
         return $response
-    }
-    catch {
-        Write-Error "Error creating new device access group: $_"
-    }
 }

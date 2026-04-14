@@ -78,18 +78,22 @@ Website: https://github.com/soybigmac/NCRestAPI
 #>
 
 function New-NCSite {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$customerId,
 
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$siteName,
 
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$contactFirstName,
 
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$contactLastName,
 
         [string]$licenseType,
@@ -121,12 +125,7 @@ function New-NCSite {
         [string]$postalCode
     )
 
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
-
-    $api = $global:NCRestApiInstance
+    $api = Get-NCRestApiInstance
 
     Write-Verbose "[FUNCTION] Running New-NCSite."
     $body = [ordered]@{
@@ -152,12 +151,9 @@ function New-NCSite {
 
     $endpoint = "api/customers/$customerId/sites"
 
-    try {
         Write-Verbose "[FUNCTION] Creating new site with endpoint: $endpoint."
+        if (-not $PSCmdlet.ShouldProcess($siteName, 'Create site')) { return }
+
         $response = $api.Post($endpoint, $body)
         return $response
-    }
-    catch {
-        Write-Error "Error creating new site: $_"
-    }
 }

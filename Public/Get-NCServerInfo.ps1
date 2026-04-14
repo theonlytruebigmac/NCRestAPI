@@ -1,87 +1,53 @@
 <#
 .SYNOPSIS
-Retrieves various types of information from the N-central API.
+Retrieves N-central API service metadata.
 
 .DESCRIPTION
-The `Get-NCServerInfo` function retrieves various types of information from the N-central API.
-It can retrieve general API information, health status, or extra server information based on the provided parameters.
+Covers four of the `/api` metadata endpoints:
 
-.PARAMETER health
-Retrieves the health status of the N-central API.
+  - default  -> GET /api              - link list of top-level endpoints
+  - -Version -> GET /api/server-info  - running API-Service version
+  - -Health  -> GET /api/health       - health status
+  - -Extra   -> GET /api/server-info/extra - extra version info (public)
 
-.PARAMETER extra
-Retrieves extra server information from the N-central API.
-
-.EXAMPLE
-PS C:\> Get-NCServerInfo -health -Verbose
-Retrieves the health status of the N-central API with verbose output enabled.
+Supply `-Credential` together with `-Extra` to use the authenticated variant at
+POST /api/server-info/extra/authenticated, which returns richer, per-user version
+information.
 
 .EXAMPLE
-PS C:\> Get-NCServerInfo -extra
-Retrieves extra server information from the N-central API.
+Get-NCServerInfo
 
 .EXAMPLE
-PS C:\> Get-NCServerInfo
-Retrieves general API information from the N-central API.
+Get-NCServerInfo -Version
 
-.INPUTS
-None. You cannot pipe input to this function.
-
-.OUTPUTS
-System.Object
-The function returns information from the specified N-central API endpoint.
-
-.NOTES
-Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+.EXAMPLE
+Get-NCServerInfo -Extra -Credential (Get-Credential)
 #>
-
 function Get-NCServerInfo {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'Links')]
+    [OutputType([pscustomobject])]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification = 'Parameters are discriminators consumed via ParameterSetName.')]
     param (
-        [switch]$health,
-
-        [switch]$extra
+        [Parameter(ParameterSetName = 'Health')][switch]$Health,
+        [Parameter(ParameterSetName = 'Version')][switch]$Version,
+        [Parameter(ParameterSetName = 'Extra')][switch]$Extra,
+        [Parameter(ParameterSetName = 'Extra')][pscredential]$Credential
     )
-    
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
+    $api = Get-NCRestApiInstance
 
-    $api = $global:NCRestApiInstance
-    Write-Verbose "[FUNCTION] Running Get-NCServerInfo."
-    
-    if ($health) {
-        Write-Verbose "[FUNCTION] Retrieving health status."
-        $endpoint = "api/health"
-    }
-    elseif ($extra) {
-        Write-Verbose "[FUNCTION] Retrieving extra server information."
-        $endpoint = "api/server-info/extra"
-    }
-    else {
-        Write-Verbose "[FUNCTION] Retrieving general API information."
-        $endpoint = "api"
-    }
-
-    try {
-        $data = $api.Get($endpoint)
-
-        if ($extra) {
-            Write-Verbose "[FUNCTION] Returning extra server information."
-            return $data._extra
+    switch ($PSCmdlet.ParameterSetName) {
+        'Health'  { return $api.Get('api/health') }
+        'Version' { return $api.Get('api/server-info') }
+        'Extra'   {
+            if ($Credential) {
+                $body = @{
+                    username = $Credential.UserName
+                    password = $Credential.GetNetworkCredential().Password
+                }
+                return $api.Post('api/server-info/extra/authenticated', $body)
+            }
+            return $api.Get('api/server-info/extra')
         }
-        elseif ($health) {
-            Write-Verbose "[FUNCTION] Returning health status."
-            return $data
-        }
-        else {
-            Write-Verbose "[FUNCTION] Returning general API information."
-            return $data._links
-        }
-    }
-    catch {
-        Write-Error "Error retrieving rest information: $_"
+        default   { return $api.Get('api') }
     }
 }

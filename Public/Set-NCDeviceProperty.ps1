@@ -1,71 +1,57 @@
 <#
 .SYNOPSIS
-Sets a custom property for a device in the N-central API.
+Updates a custom property on a device.
 
 .DESCRIPTION
-The `Set-NCDeviceProperty` function sets a custom property for a device in the N-central API.
-It requires parameters to specify the device ID, property ID, and value.
+PUT /api/devices/{deviceId}/custom-properties/{propertyId}. All body fields in the
+`DeviceCustomPropertyModification` schema are supported; only bound parameters are sent.
 
 .PARAMETER DeviceId
-The device ID for which the property will be set. This parameter is mandatory.
+Target device.
 
 .PARAMETER PropertyId
-The ID of the property to be set. This parameter is mandatory.
+Custom-property ID.
 
 .PARAMETER Value
-The value to be set for the property. This parameter is mandatory.
+New property value.
+
+.PARAMETER PropertyName
+Optional new property name.
+
+.PARAMETER PropertyType
+Optional new property type.
+
+.PARAMETER EnumeratedValueList
+Optional list of allowed values (for enumerated properties).
 
 .EXAMPLE
-PS C:\> Set-NCDeviceProperty -DeviceId 12345 -PropertyId 678 -Value "New Value" -Verbose
-Sets a custom property for the device with the ID 12345 and property ID 678 with the value "New Value", with verbose output enabled.
-
-.INPUTS
-None. You cannot pipe input to this function.
-
-.OUTPUTS
-System.Object
-The function returns the response from the N-central API after setting the device property.
-
-.NOTES
-Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Set-NCDeviceProperty -DeviceId 123 -PropertyId 7 -Value 'production'
 #>
-
 function Set-NCDeviceProperty {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param (
-        [Parameter(Mandatory = $true)]
-        [int]$DeviceId,
+        [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
+        [ValidateNotNullOrEmpty()]
+        [string]$DeviceId,
 
-        [Parameter(Mandatory = $true)]
-        [int]$PropertyId,
+        [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
+        [ValidateNotNullOrEmpty()]
+        [string]$PropertyId,
 
-        [Parameter(Mandatory = $true)]
-        [string]$Value
+        [string]$Value,
+        [string]$PropertyName,
+        [string]$PropertyType,
+        [string[]]$EnumeratedValueList
     )
+    begin { $api = Get-NCRestApiInstance }
+    process {
+        $body = @{}
+        if ($PSBoundParameters.ContainsKey('Value'))               { $body.value               = $Value }
+        if ($PSBoundParameters.ContainsKey('PropertyName'))        { $body.propertyName        = $PropertyName }
+        if ($PSBoundParameters.ContainsKey('PropertyType'))        { $body.propertyType        = $PropertyType }
+        if ($PSBoundParameters.ContainsKey('EnumeratedValueList')) { $body.enumeratedValueList = $EnumeratedValueList }
 
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
-
-    $api = $global:NCRestApiInstance
-
-    Write-Verbose "[FUNCTION] Running Set-NCDeviceProperty."
-    $body = @{
-        value = $Value
-    }
-
-    $endpoint = "api/devices/$deviceId/custom-properties/$propertyId"
-
-    $bodyJson = $body | ConvertTo-Json -Depth 10
-
-    try {
-        Write-Verbose "[FUNCTION] Setting device property with endpoint: $endpoint."
-        $response = $api.Put($endpoint, $bodyJson)
-        return $response
-    }
-    catch {
-        Write-Error "Error setting organization property: $_"
+        if (-not $PSCmdlet.ShouldProcess("$DeviceId/$PropertyId", 'Set device custom property')) { return }
+        $api.Put("api/devices/$DeviceId/custom-properties/$PropertyId", $body)
     }
 }

@@ -78,18 +78,22 @@ Website: https://github.com/soybigmac/NCRestAPI
 #>
 
 function New-NCCustomer {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param (
-        [Parameter(Mandatory = $true)]
-        [int]$soId,
+        [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName)]
+        [ValidateNotNullOrEmpty()]
+        [string]$soId,
 
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$customerName,
 
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$contactFirstName,
 
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$contactLastName,
 
         [string]$licenseType,
@@ -121,43 +125,31 @@ function New-NCCustomer {
         [string]$postalCode
     )
 
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
+    begin { $api = Get-NCRestApiInstance }
 
-    $api = $global:NCRestApiInstance
-    
-    Write-Verbose "[FUNCTION] Running New-NCCustomer."
-    $body = [ordered]@{
-        customerName     = $customerName
-        contactFirstName = $contactFirstName
-        contactLastName  = $contactLastName
-    }
+    process {
+        $body = [ordered]@{
+            customerName     = $customerName
+            contactFirstName = $contactFirstName
+            contactLastName  = $contactLastName
+        }
 
-    if ($licenseType) { $body.licenseType = $licenseType }
-    if ($externalId) { $body.externalId = $externalId }
-    if ($phone) { $body.phone = $phone }
-    if ($contactTitle) { $body.contactTitle = $contactTitle }
-    if ($contactEmail) { $body.contactEmail = $contactEmail }
-    if ($contactPhone) { $body.contactPhone = $contactPhone }
-    if ($contactPhoneExt) { $body.contactPhoneExt = $contactPhoneExt }
-    if ($contactDepartment) { $body.contactDepartment = $contactDepartment }
-    if ($street1) { $body.street1 = $street1 }
-    if ($street2) { $body.street2 = $street2 }
-    if ($city) { $body.city = $city }
-    if ($stateProv) { $body.stateProv = $stateProv }
-    if ($country) { $body.country = $country }
-    if ($postalCode) { $body.postalCode = $postalCode }
+        if ($licenseType)       { $body.licenseType       = $licenseType }
+        if ($externalId)        { $body.externalId        = $externalId }
+        if ($phone)             { $body.phone             = $phone }
+        if ($contactTitle)      { $body.contactTitle      = $contactTitle }
+        if ($contactEmail)      { $body.contactEmail      = $contactEmail }
+        if ($contactPhone)      { $body.contactPhone      = $contactPhone }
+        if ($contactPhoneExt)   { $body.contactPhoneExt   = $contactPhoneExt }
+        if ($contactDepartment) { $body.contactDepartment = $contactDepartment }
+        if ($street1)           { $body.street1           = $street1 }
+        if ($street2)           { $body.street2           = $street2 }
+        if ($city)              { $body.city              = $city }
+        if ($stateProv)         { $body.stateProv         = $stateProv }
+        if ($country)           { $body.country           = $country }
+        if ($postalCode)        { $body.postalCode        = $postalCode }
 
-    $endpoint = "api/service-orgs/$soId/customers"
-
-    try {
-        Write-Verbose "[FUNCTION] Creating new customer with endpoint: $endpoint."
-        $response = $api.Post($endpoint, $body)
-        return $response
-    }
-    catch {
-        Write-Error "Error creating new customer: $_"
+        if (-not $PSCmdlet.ShouldProcess($customerName, 'Create customer')) { return }
+        $api.Post("api/service-orgs/$soId/customers", $body)
     }
 }

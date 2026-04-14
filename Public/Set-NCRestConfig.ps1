@@ -1,82 +1,86 @@
 <#
 .SYNOPSIS
-This script sets the configuration for the NCREST module.
+Configures the NCRestAPI module and establishes a connection to the N-central server.
 
 .DESCRIPTION
-The Set-NCRESTConfig.ps1 script is used to configure the settings for the NCREST module. It allows you to specify the base URL, authentication credentials, and other options required for making RESTful API calls using the NCREST module.
+Stores the base URL, API token, and optional token-expiration overrides, then authenticates
+and caches a module-scoped NCRestAPI instance that subsequent cmdlets reuse.
 
 .PARAMETER BaseUrl
-Specifies the base URL for the RESTful API. This is the URL that will be used as the starting point for all API calls.
+Fully-qualified URL of the N-central server (https:// scheme added if omitted).
 
-.PARAMETER Username
-Specifies the username to be used for authentication when making API calls.
+.PARAMETER ApiToken
+User-level API token from N-central. Accepts [string] or [securestring].
 
-.PARAMETER Password
-Specifies the password to be used for authentication when making API calls.
+.PARAMETER AccessTokenExpiration
+Access-token lifetime override (e.g. '120s', '30m', '1h'). Default '1h'.
 
-.PARAMETER Timeout
-Specifies the timeout value (in seconds) for API requests. If no value is provided, the default timeout value will be used.
+.PARAMETER RefreshTokenExpiration
+Refresh-token lifetime override (e.g. '25h'). Default '25h'.
+
+.PARAMETER TimeoutSec
+Per-request timeout in seconds. Default 60.
+
+.PARAMETER MaxRetries
+Maximum retries on HTTP 429 / 5xx / transport errors. Default 3.
+
+.PARAMETER ThrottleMs
+Minimum spacing between successive requests in milliseconds. 0 (default) means no
+client-side throttle. Useful during large `-All` pulls or pipeline fan-out against
+rate-limited tenants.
 
 .EXAMPLE
-Set-NCRESTConfig -BaseUrl "https://api.example.com" -Username "admin" -Password "password" -Timeout 30
-Configures the NCREST module with the specified base URL, username, password, and timeout value.
+Set-NCRestConfig -BaseUrl 'n-central.example.com' -ApiToken $token
+
+.EXAMPLE
+Set-NCRestConfig -BaseUrl ... -ApiToken ... -ThrottleMs 200 -MaxRetries 5
 
 .NOTES
-This script requires the NCREST module to be installed. You can install it by running the following command:
-Install-Module -Name NCREST
+Author: Zach Frazier
 #>
-
 function Set-NCRestConfig {
+    [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string]$BaseUrl,
 
-        [Parameter(Mandatory = $true)]
-        [string]$ApiToken,
+        [Parameter(Mandatory)]
+        [object]$ApiToken,
 
-        [Parameter(Mandatory = $false)]
-        [string]$AccessTokenExpiration = "1h",
+        [ValidatePattern('^\d+[smh]$')]
+        [string]$AccessTokenExpiration = '1h',
 
-        [Parameter(Mandatory = $false)]
-        [string]$RefreshTokenExpiration = "25h"
+        [ValidatePattern('^\d+[smh]$')]
+        [string]$RefreshTokenExpiration = '25h',
+
+        [ValidateRange(1, 600)]
+        [int]$TimeoutSec = 60,
+
+        [ValidateRange(0, 10)]
+        [int]$MaxRetries = 3,
+
+        [ValidateRange(0, 60000)]
+        [int]$ThrottleMs = 0
     )
 
-    # Validate and correct BaseUrl
-    if ($BaseUrl -notmatch '^https://') {
-        Write-Verbose "[NCRESTCONFIG] BaseUrl does not contain 'https://'. Adding 'https://' to the beginning of the URL."
-        $BaseUrl = 'https://' + $BaseUrl
-    }
-
-    # Remove trailing slash if present
-    Write-Verbose "[NCRESTCONFIG] Removing trailing slash from BaseUrl if present."
+    if ($BaseUrl -notmatch '^https?://') { $BaseUrl = 'https://' + $BaseUrl }
     $BaseUrl = $BaseUrl.TrimEnd('/')
 
-    # Encrypt tokens manually
-    Write-Verbose "[NCRESTCONFIG] Encrypting ApiToken."
-    $secureApiToken = ConvertTo-SecureString -String $ApiToken -AsPlainText -Force
-    $encryptedApiToken = "Secure:" + [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes([System.Runtime.InteropServices.Marshal]::PtrToStringBSTR([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureApiToken))))
-
-    # Using environment variables for secure storage
-    Write-Verbose "[NCRESTCONFIG] Setting environment variables for BaseUrl and encrypted ApiToken."
-    [System.Environment]::SetEnvironmentVariable('NcentralBaseUrl', $BaseUrl, [System.EnvironmentVariableTarget]::Process)
-    [System.Environment]::SetEnvironmentVariable('NcentralApiToken', $encryptedApiToken, [System.EnvironmentVariableTarget]::Process)
-    
-    Write-Verbose "[NCRESTCONFIG] Configuration set: BaseUrl and ApiToken Added"
-
-    if ($AccessTokenExpiration) {
-        Write-Verbose "[NCRESTCONFIG] Setting environment variable for AccessTokenExpiration."
-        [System.Environment]::SetEnvironmentVariable('AccessTokenExpiration', $AccessTokenExpiration, [System.EnvironmentVariableTarget]::Process)
+    if ($ApiToken -is [securestring]) {
+        $secureApiToken = $ApiToken
+    } elseif ($ApiToken -is [string]) {
+        $secureApiToken = [NCRestAPI]::ToSecureString($ApiToken)
     } else {
-        Write-Warning "[NCRESTCONFIG] AccessTokenExpiration must be in the format '120s'."
+        throw "ApiToken must be [string] or [securestring]."
     }
 
-    if ($RefreshTokenExpiration) {
-        Write-Verbose "[NCRESTCONFIG] Setting environment variable for RefreshTokenExpiration."
-        [System.Environment]::SetEnvironmentVariable('RefreshTokenExpiration', $RefreshTokenExpiration, [System.EnvironmentVariableTarget]::Process)
-    } else {
-        Write-Warning "[NCRESTCONFIG] RefreshTokenExpiration must be in the format '25h'."
-    }
+    Write-Verbose "[NCRESTCONFIG] Creating NCRestAPI instance for $BaseUrl."
+    $instance = [NCRestAPI]::new($BaseUrl, $secureApiToken, $AccessTokenExpiration, $RefreshTokenExpiration, ($VerbosePreference -eq 'Continue'))
+    $instance.TimeoutSec = $TimeoutSec
+    $instance.MaxRetries = $MaxRetries
+    $instance.ThrottleMs = $ThrottleMs
 
-    Write-Verbose "[NCRESTCONFIG] Creating global NCRestAPI instance."
-    $global:NCRestApiInstance = [NCRestAPI]::new($VerbosePreference -eq "Continue")
+    $script:NCRestApiInstance = $instance
+    $global:NCRestApiInstance = $instance
 }

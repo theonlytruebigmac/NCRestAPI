@@ -1,0 +1,80 @@
+name: Publish to PowerShell Gallery
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Build only, do not publish'
+        type: boolean
+        default: true
+
+jobs:
+  publish:
+    name: Publish module
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install analyzer and Pester
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          Install-Module Pester -Force -Scope CurrentUser -SkipPublisherCheck -MinimumVersion 5.0.0
+
+      - name: Lint
+        shell: pwsh
+        run: |
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+          $results | Format-Table -AutoSize
+          if ($results | Where-Object Severity -eq Error) { exit 1 }
+
+      - name: Test
+        shell: pwsh
+        run: |
+          $c = New-PesterConfiguration
+          $c.Run.Path = './Tests'
+          $c.Run.Exit = $true
+          $c.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $c
+
+      - name: Verify manifest
+        shell: pwsh
+        run: |
+          $m = Test-ModuleManifest ./NCRestAPI.psd1
+          Write-Host "Module $($m.Name) version $($m.Version)"
+          if ($env:GITHUB_EVENT_NAME -eq 'release') {
+            $tag = $env:GITHUB_REF -replace '^refs/tags/v?', ''
+            if ($tag -and $m.Version.ToString() -ne $tag) {
+              throw "Manifest version $($m.Version) does not match release tag $tag"
+            }
+          }
+
+      - name: Stage module for publish
+        shell: pwsh
+        run: |
+          $staging = Join-Path $env:RUNNER_TEMP 'NCRestAPI'
+          New-Item -Path $staging -ItemType Directory -Force | Out-Null
+          Copy-Item NCRestAPI.psd1, NCRestAPI.psm1, LICENSE, README.md, CHANGELOG.md $staging
+          Copy-Item -Recurse Public, Private $staging
+          Get-ChildItem -Recurse $staging | Select-Object FullName
+          "MODULE_STAGING=$staging" >> $env:GITHUB_ENV
+
+      - name: Publish (dry run)
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true
+        shell: pwsh
+        run: |
+          Write-Host "Dry run - would publish $env:MODULE_STAGING"
+          Test-ModuleManifest (Join-Path $env:MODULE_STAGING 'NCRestAPI.psd1')
+
+      - name: Publish to PowerShell Gallery
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.dry_run == false)
+        shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
+        run: |
+          if (-not $env:NUGET_API_KEY) { throw 'PSGALLERY_API_KEY secret is missing.' }
+          Publish-Module -Path $env:MODULE_STAGING -NuGetApiKey $env:NUGET_API_KEY

@@ -1,15 +1,9 @@
-# Import Private Functions and Classes
-Get-ChildItem -Path "$PSScriptRoot/Private" -Filter *.ps1 | ForEach-Object {
-    . $_.FullName
-}
+$script:NCRestApiInstance = $null
 
-# Import Public Functions
-Get-ChildItem -Path "$PSScriptRoot/Public" -Filter *.ps1 | ForEach-Object {
-    . $_.FullName
-}
+$privateFiles = @(Get-ChildItem -Path "$PSScriptRoot/Private" -Filter *.ps1 -ErrorAction SilentlyContinue)
+foreach ($file in $privateFiles) { . $file.FullName }
 
-# Declare a global variable for NCRestAPI instance
-$global:NCRestApiInstance = $null
+$publicFiles = @(Get-ChildItem -Path "$PSScriptRoot/Public" -Filter *.ps1 -ErrorAction SilentlyContinue)
+foreach ($file in $publicFiles) { . $file.FullName }
 
-# Export Public Functions
-Export-ModuleMember -Function (Get-ChildItem -Path "$PSScriptRoot/Public" -Filter *.ps1 | ForEach-Object { $_.BaseName })
+Export-ModuleMember -Function $publicFiles.BaseName

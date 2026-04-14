@@ -41,36 +41,24 @@ Website: https://github.com/soybigmac/NCRestAPI
 
 function Get-NCScheduledTaskStatus {
     [CmdletBinding()]
+    [OutputType([pscustomobject])]
     param (
-        [Parameter(Mandatory = $true)]
-        [int]$taskId,
+        [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
+        [ValidateNotNullOrEmpty()]
+        [string]$TaskId,
 
-        [switch]$details
+        [switch]$Details
     )
 
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
+    begin { $api = Get-NCRestApiInstance }
 
-    $api = $global:NCRestApiInstance
-    Write-Verbose "[FUNCTION] Running Get-NCScheduledTaskStatus."
-    
-    if ($details) {
-        Write-Verbose "[FUNCTION] Retrieving detailed status for task ID: $taskId."
-        $endpoint = "api/scheduled-tasks/$taskId/status/details"
-    }
-    else {
-        Write-Verbose "[FUNCTION] Retrieving status for task ID: $taskId."
-        $endpoint = "api/scheduled-tasks/$taskId/status"
-    }
-
-    try {
-        Write-Verbose "[FUNCTION] Retrieving task status for endpoint: $endpoint."
-        $data = $api.Get($endpoint)
-        return $data
-    }
-    catch {
-        Write-Error "Error retrieving task status: $_"
+    process {
+        $endpoint = if ($Details) {
+            "api/scheduled-tasks/$TaskId/status/details"
+        } else {
+            "api/scheduled-tasks/$TaskId/status"
+        }
+        Write-Verbose "[FUNCTION] Get-NCScheduledTaskStatus: $endpoint"
+        $api.Get($endpoint)
     }
 }

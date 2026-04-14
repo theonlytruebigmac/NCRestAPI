@@ -30,30 +30,23 @@ Website: https://github.com/soybigmac/NCRestAPI
 
 function Get-NCDefaultOrgProperty {
     [CmdletBinding()]
+    [OutputType([pscustomobject])]
     param (
         [Parameter(Mandatory = $true)]
-        [int]$OrgUnitId,
+        [ValidateNotNullOrEmpty()]
+        [string]$OrgUnitId,
 
         [Parameter(Mandatory = $true)]
-        [int]$PropertyId
+        [ValidateNotNullOrEmpty()]
+        [string]$PropertyId
     )
 
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
-
-    $api = $global:NCRestApiInstance
+    $api = Get-NCRestApiInstance
     
     Write-Verbose "[FUNCTION] Running Get-NCDefaultOrgProperty."
     $endpoint = "api/org-units/$OrgUnitId/org-custom-property-defaults/$propertyId"
 
-    try {
         Write-Verbose "[FUNCTION] Retrieving default organization property with endpoint: $endpoint."
         $response = $api.Get($endpoint)
         return $response
-    }
-    catch {
-        Write-Error "Error retrieving default organization property: $_"
-    }
 }

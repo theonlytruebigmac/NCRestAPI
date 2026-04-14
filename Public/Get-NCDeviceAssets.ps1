@@ -27,27 +27,25 @@ Website: https://github.com/soybigmac/NCRestAPI
 
 function Get-NCDeviceAssets {
     [CmdletBinding()]
+    [OutputType([pscustomobject])]
     param (
-        [Parameter(Mandatory = $true)]
-        [int]$DeviceId
+        [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName)]
+        [ValidateNotNullOrEmpty()]
+        [string]$DeviceId
     )
 
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
+    begin { $api = Get-NCRestApiInstance }
 
-    $api = $global:NCRestApiInstance
-    
+
+
+    process {
     Write-Verbose "[FUNCTION] Running Get-NCDeviceAssets."
     $endpoint = "api/devices/$DeviceId/assets"
 
-    try {
-        Write-Verbose "[FUNCTION] Retrieving device assests with endpoint: $endpoint."
+        Write-Verbose "[FUNCTION] Retrieving device assets with endpoint: $endpoint."
         $data = $api.Get($endpoint)
         return $data
-    }
-    catch {
-        Write-Error "Error retrieving device assests: $_"
+
+
     }
 }

@@ -27,28 +27,25 @@ Website: https://github.com/soybigmac/NCRestAPI
 
 function Get-NCDeviceServices {
     [CmdletBinding()]
+    [OutputType([pscustomobject])]
     param (
-        [Parameter(Mandatory = $true)]
-        [int]$deviceId
+        [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName)]
+        [ValidateNotNullOrEmpty()]
+        [string]$deviceId
     )
 
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
+    begin { $api = Get-NCRestApiInstance }
 
-    $api = $global:NCRestApiInstance
-    
+
+
+    process {
     Write-Verbose "[FUNCTION] Running Get-NCDeviceServices."
     $endpoint = "api/devices/$DeviceId/service-monitor-status"
 
-    try {
-        Write-Verbose "[FUNCTION] Retriving device services for endpoint: $endpoint."
+        Write-Verbose "[FUNCTION] Retrieving device services for endpoint: $endpoint."
         $data = $api.Get($endpoint)
         return $data
-    }
-    catch {
-        Write-Error "Error retrieving device services $_"
-    }
 
+
+    }
 }

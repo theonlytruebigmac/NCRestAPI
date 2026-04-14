@@ -1,55 +1,50 @@
 <#
 .SYNOPSIS
-Retrieves data from a specified N-central API endpoint.
+Escape hatch for raw N-central API calls the module doesn't wrap yet.
 
 .DESCRIPTION
-The `Get-NCRestData` function retrieves data from a specified N-central API endpoint.
-It requires the endpoint URL to be provided.
+Forwards any endpoint + method + body to the underlying NCRestAPI client. Handy for
+endpoints that are not yet covered by a dedicated cmdlet (e.g. navigational `_links`
+endpoints, new endpoints added to the API after a module release).
 
 .PARAMETER Endpoint
-The endpoint URL from which to retrieve data. This parameter is mandatory.
+The endpoint to call (e.g. `api/customers`, `api/custom-psa/tickets`).
+
+.PARAMETER Method
+HTTP verb. Defaults to `Get`.
+
+.PARAMETER Body
+Optional body for POST/PUT/PATCH/DELETE. Hashtable or PSCustomObject - the class
+serializes to JSON automatically.
 
 .EXAMPLE
-PS C:\> Get-NCRestData -Endpoint "api/customers" -Verbose
-Retrieves data from the "api/customers" endpoint with verbose output enabled.
+Get-NCRestData -Endpoint 'api/custom-psa'
 
 .EXAMPLE
-PS C:\> Get-NCRestData -Endpoint "api/devices"
-Retrieves data from the "api/devices" endpoint.
-
-.INPUTS
-None. You cannot pipe input to this function.
-
-.OUTPUTS
-System.Object
-The function returns data from the specified N-central API endpoint.
-
-.NOTES
-Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Get-NCRestData -Endpoint 'api/some-new-endpoint' -Method Post -Body @{ foo = 'bar' }
 #>
-
 function Get-NCRestData {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)]
-        [string]$Endpoint
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Endpoint,
+
+        [ValidateSet('Get', 'Post', 'Put', 'Patch', 'Delete')]
+        [string]$Method = 'Get',
+
+        [object]$Body
     )
-
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
-
-    $api = $global:NCRestApiInstance
-    Write-Verbose "[FUNCTION] Running Get-NCRestData."
-    
-    try {
-        Write-Verbose "[FUNCTION] Retrieving data from endpoint: $endpoint."
-        $data = $api.Get($endpoint)
-        return $data
-    }
-    catch {
-        Write-Error "Error retrieving endpoint response: $_"
+    $api = Get-NCRestApiInstance
+    Write-Verbose "[FUNCTION] Get-NCRestData: $Method $Endpoint"
+    switch ($Method) {
+        'Get'    { return $api.Get($Endpoint) }
+        'Post'   { return $api.Post($Endpoint, $Body) }
+        'Put'    { return $api.Put($Endpoint, $Body) }
+        'Patch'  { return $api.Patch($Endpoint, $Body) }
+        'Delete' {
+            if ($PSBoundParameters.ContainsKey('Body')) { return $api.Delete($Endpoint, $Body) }
+            return $api.Delete($Endpoint)
+        }
     }
 }

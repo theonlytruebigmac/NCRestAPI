@@ -1,124 +1,97 @@
 <#
 .SYNOPSIS
-Sets a default organization property in the N-central API.
+Sets a default organization custom property.
 
 .DESCRIPTION
-The `Set-NCDefaultOrgProperty` function sets a default organization property in the N-central API.
-It requires parameters to specify the organization unit ID, property ID, property name, propagation type, and value.
-Optional parameters include whether to propagate the change and an array of selected organization unit IDs.
+PUT /api/org-units/{orgUnitId}/org-custom-property-defaults. Matches the
+`DefaultCustomPropertyModifyRequest` schema: propagate, propertyId, propertyName,
+propagationType, defaultValue, selectedOrgUnitIds, enumeratedValueList.
 
 .PARAMETER OrgUnitId
-The organization unit ID where the property will be set. This parameter is mandatory.
+Org unit that owns the default.
 
 .PARAMETER PropertyId
-The ID of the property to be set. This parameter is mandatory.
+Property ID to modify.
 
 .PARAMETER PropertyName
-The name of the property to be set. This parameter is mandatory.
+Property name.
 
 .PARAMETER PropagationType
-The type of propagation for the property. This parameter is mandatory.
+How the change propagates down the org tree.
 
-.PARAMETER Value
-The value to be set for the property. This parameter is mandatory.
+.PARAMETER DefaultValue
+Default value to set.
 
 .PARAMETER Propagate
-Specifies whether the property change should be propagated. The default value is $false.
+Propagate the change to descendants.
 
 .PARAMETER SelectedOrgUnitIds
-An array of organization unit IDs to which the property change should be propagated.
+Targeted org units the change should apply to.
+
+.PARAMETER EnumeratedValueList
+Allowed values (for enumerated properties).
 
 .EXAMPLE
-PS C:\> Set-NCDefaultOrgProperty -OrgUnitId 123 -PropertyId 456 -PropertyName "Custom Property" -PropagationType "Type" -Value "New Value" -Verbose
-Sets a default organization property with the specified details and enables verbose output.
-
-.EXAMPLE
-PS C:\> Set-NCDefaultOrgProperty -OrgUnitId 123 -PropertyId 456 -PropertyName "Custom Property" -PropagationType "Type" -Value "New Value" -Propagate $true -SelectedOrgUnitIds @(789, 101112) -Verbose
-Sets a default organization property with the specified details, propagates the change to the selected organization units, and enables verbose output.
-
-.INPUTS
-None. You cannot pipe input to this function.
-
-.OUTPUTS
-System.Object
-The function returns the response from the N-central API after setting the default organization property.
-
-.NOTES
-Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Set-NCDefaultOrgProperty -OrgUnitId 1 -PropertyId 5 -PropertyName 'region' `
+    -PropagationType SERVICE_ORGANIZATION_AND_CUSTOMER -DefaultValue 'US'
 #>
-
 function Set-NCDefaultOrgProperty {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param (
-        [Parameter(Mandatory = $true)]
-        [int]$OrgUnitId,
+        [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
+        [ValidateNotNullOrEmpty()]
+        [string]$OrgUnitId,
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory)]
         [int]$PropertyId,
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string]$PropertyName,
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [ValidateSet(
-            "NO_PROPAGATION", 
-            "SERVICE_ORGANIZATION_ONLY", 
-            "SERVICE_ORGANIZATION_AND_CUSTOMER_AND_SITE", 
-            "SERVICE_ORGANIZATION_AND_CUSTOMER", 
-            "SERVICE_ORGANIZATION_AND_SITE", 
-            "CUSTOMER_AND_SITE", 
-            "CUSTOMER_ONLY", 
-            "SITE_ONLY", 
-            "SERVICE_AND_ORGANIZATION", 
-            "SERVICE_AND_ORGANIZATION_AND_DEVICE", 
-            "SERVICE_AND_DEVICE", 
-            "ORGANIZATION_AND_DEVICE", 
-            "ORGANIZATION_ONLY", 
-            "DEVICE_ONLY"
+            'NO_PROPAGATION',
+            'SERVICE_ORGANIZATION_ONLY',
+            'SERVICE_ORGANIZATION_AND_CUSTOMER_AND_SITE',
+            'SERVICE_ORGANIZATION_AND_CUSTOMER',
+            'SERVICE_ORGANIZATION_AND_SITE',
+            'CUSTOMER_AND_SITE',
+            'CUSTOMER_ONLY',
+            'SITE_ONLY',
+            'SERVICE_AND_ORGANIZATION',
+            'SERVICE_AND_ORGANIZATION_AND_DEVICE',
+            'SERVICE_AND_DEVICE',
+            'ORGANIZATION_AND_DEVICE',
+            'ORGANIZATION_ONLY',
+            'DEVICE_ONLY'
         )]
         [string]$PropagationType,
 
-        [Parameter(Mandatory = $true)]
-        [string]$Value,
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$DefaultValue,
 
-        [ValidateSet($true, $false)]
-        [bool]$Propagate = $false,
+        [switch]$Propagate,
 
-        [int[]]$SelectedOrgUnitIds
+        [int[]]$SelectedOrgUnitIds,
+
+        [string[]]$EnumeratedValueList
     )
+    begin { $api = Get-NCRestApiInstance }
+    process {
+        $body = [ordered]@{
+            propagate       = [bool]$Propagate
+            propertyId      = $PropertyId
+            propertyName    = $PropertyName
+            propagationType = $PropagationType
+            defaultValue    = $DefaultValue
+        }
+        if ($SelectedOrgUnitIds)   { $body.selectedOrgUnitIds  = $SelectedOrgUnitIds }
+        if ($EnumeratedValueList)  { $body.enumeratedValueList = $EnumeratedValueList }
 
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
-
-    $api = $global:NCRestApiInstance
-    
-    Write-Verbose "[FUNCTION] Running Set-NCDefaultOrgProperty."
-    $body = [ordered]@{
-        propagate       = $Propagate
-        propertyId      = $PropertyId
-        propertyName    = $PropertyName
-        orgUnitId       = $OrgUnitId
-        propagationType = $PropagationType
-        defaultValue           = $Value
-    }
-
-    if ($SelectedOrgUnitIds) {
-        $body["selectedOrgUnitIds"] = $SelectedOrgUnitIds
-    }
-
-    $endpoint = "api/org-units/$OrgUnitId/org-custom-property-defaults"
-
-    $bodyJson = $body | ConvertTo-Json -Depth 10
-
-    try {
-        Write-Verbose "[FUNCTION] Setting Default Orgnization Property to $endpoint."
-        $response = $api.Put($endpoint, $bodyJson)
-        return $response
-    }
-    catch {
-        Write-Error "Error setting default organization property: $_"
+        if (-not $PSCmdlet.ShouldProcess($OrgUnitId, 'Set default org property')) { return }
+        $api.Put("api/org-units/$OrgUnitId/org-custom-property-defaults", $body)
     }
 }

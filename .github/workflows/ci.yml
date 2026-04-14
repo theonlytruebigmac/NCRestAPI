@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PSScriptAnalyzer and Pester
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          Install-Module Pester -Force -Scope CurrentUser -SkipPublisherCheck -MinimumVersion 5.0.0
+
+      - name: Lint
+        shell: pwsh
+        run: |
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+          $results | Format-Table -AutoSize
+          if ($results | Where-Object Severity -eq Error) { exit 1 }
+
+      - name: Test
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = './Tests'
+          $config.Output.Verbosity = 'Detailed'
+          $config.Run.Exit = $true
+          Invoke-Pester -Configuration $config
+
+  spec-drift:
+    name: Spec drift (live)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Refresh fixture from live spec
+        shell: pwsh
+        env:
+          NC_OPENAPI_URL: https://sedemo.focusmsp.net/api-explorer/openapi-spec.json
+        run: |
+          Invoke-WebRequest -Uri $env:NC_OPENAPI_URL -OutFile Tests/fixtures/openapi-spec.json
+          git diff --stat Tests/fixtures/openapi-spec.json || true
+
+      - name: Install Pester
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module Pester -Force -Scope CurrentUser -SkipPublisherCheck -MinimumVersion 5.0.0
+
+      - name: Run spec-drift tests against refreshed fixture
+        shell: pwsh
+        run: |
+          $c = New-PesterConfiguration
+          $c.Run.Path = './Tests/SpecDrift.Tests.ps1'
+          $c.Output.Verbosity = 'Detailed'
+          $c.Run.Exit = $true
+          Invoke-Pester -Configuration $c

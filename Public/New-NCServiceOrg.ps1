@@ -72,15 +72,18 @@ Website: https://github.com/soybigmac/NCRestAPI
 #>
 
 function New-NCServiceOrg {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$SoName,
 
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$ContactFirstName,
 
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$ContactLastName,
 
         [string]$ExternalId,
@@ -110,12 +113,7 @@ function New-NCServiceOrg {
         [string]$PostalCode
     )
 
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
-
-    $api = $global:NCRestApiInstance
+    $api = Get-NCRestApiInstance
 
     Write-Verbose "[FUNCTION] Running New-NCServiceOrg."
     $body = [ordered]@{
@@ -140,12 +138,9 @@ function New-NCServiceOrg {
 
     $endpoint = "api/service-orgs"
 
-    try {
         Write-Verbose "[FUNCTION] Creating new service organization with endpoint: $endpoint."
+        if (-not $PSCmdlet.ShouldProcess($soName, 'Create service organization')) { return }
+
         $response = $api.Post($endpoint, $body)
         return $response
-    }
-    catch {
-        Write-Error "Error creating new service organization: $_"
-    }
 }

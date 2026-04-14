@@ -1,125 +1,99 @@
 <#
 .SYNOPSIS
-Retrieves customer data from the N-central API.
+Retrieves customers from the N-central API.
 
 .DESCRIPTION
-The `Get-NCCustomers` function retrieves customer data from the N-central API. 
-It supports retrieving customers by service organization ID (soId) or customer ID (custId). 
-Optional parameters allow for pagination, sorting, and selecting specific fields.
+Supports retrieving all customers, customers under a service organization, or a specific
+customer by ID. Accepts pipeline input so you can chain `Get-NCServiceOrgs | Get-NCCustomers`
+or `Get-NCCustomers -All | Get-NCSites`.
 
-.PARAMETER soId
-The service organization ID to filter customers by.
+.PARAMETER SoId
+Service-organization ID whose customers should be listed.
 
-.PARAMETER custId
-The customer ID to filter customers by.
+.PARAMETER CustId
+Specific customer ID to retrieve. Accepts pipeline input by the property name `customerId`
+so `Get-NCCustomers -All | ForEach-Object { ... }` output can feed this parameter.
+
+.PARAMETER All
+Auto-paginate through the entire list endpoint.
 
 .PARAMETER PageNumber
-The page number to retrieve in a paginated response.
+Page to retrieve (ignored when -All is used).
 
 .PARAMETER PageSize
-The number of items per page in a paginated response.
+Items per page (ignored when -All is used).
 
 .PARAMETER SortBy
-The field by which to sort the results.
+Field to sort on.
 
 .PARAMETER SortOrder
-The order to sort the results, either 'asc' for ascending or 'desc' for descending. The default value is 'asc'.
+'asc' (default) or 'desc'.
 
 .PARAMETER Select
-Specifies the fields to include in the response.
+Fields to include in the response.
 
 .EXAMPLE
-PS C:\> Get-NCCustomers -soId 123 -Verbose
-Retrieves customers associated with the service organization ID 123 with verbose output enabled.
+Get-NCCustomers -SoId 123
 
 .EXAMPLE
-PS C:\> Get-NCCustomers -custId 456
-Retrieves the customer with the customer ID 456.
+Get-NCCustomers -All | Where-Object city -eq 'Austin'
 
 .EXAMPLE
-PS C:\> Get-NCCustomers -PageNumber 1 -PageSize 10 -SortBy "customerName" -SortOrder "desc"
-Retrieves the first page of customers with 10 items per page, sorted by customer name in descending order.
-
-.EXAMPLE
-PS C:\> Get-NCCustomers -Select "customerName,city,stateProv"
-Retrieves customers with only the specified fields: customer name, city, and state province.
-
-.INPUTS
-None. You cannot pipe input to this function.
-
-.OUTPUTS
-System.Object
-The function returns customer data from the N-central API.
-
-.NOTES
-Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Get-NCServiceOrgs | Get-NCCustomers
 #>
-
 function Get-NCCustomers {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'Page')]
+    [OutputType([pscustomobject])]
     param (
-        [int]$soId,
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [string]$SoId,
 
-        [int]$custId,
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [Alias('customerId')]
+        [string]$CustId,
 
+        [Parameter(ParameterSetName = 'All')]
+        [switch]$All,
+
+        [Parameter(ParameterSetName = 'Page')]
         [int]$PageNumber,
 
+        [Parameter(ParameterSetName = 'Page')]
         [int]$PageSize,
 
         [string]$SortBy,
-
-        [string]$SortOrder = "asc",
-
+        [ValidateSet('asc', 'desc')]
+        [string]$SortOrder = 'asc',
         [string]$Select
     )
 
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
+    begin { $api = Get-NCRestApiInstance }
 
-    $api = $global:NCRestApiInstance
-    
-    Write-Verbose "[FUNCTION] Running Get-NCCustomers."
+    process {
+        if ($CustId) {
+            Write-Verbose "[FUNCTION] Get-NCCustomers: api/customers/$CustId"
+            return $api.Get("api/customers/$CustId")
+        }
 
-    if ($PSBoundParameters.ContainsKey('soId')) {
-        Write-Verbose "[FUNCTION] Retrieving customers for soID: $soId."
-        $endpoint = "api/service-orgs/$soId/customers"
-    }
-    elseif ($PSBoundParameters.ContainsKey('custId')) {
-        Write-Verbose "[FUNCTION] Retrieving customer with custID: $custId."
-        $endpoint = "api/customers/$custId"
-    }
-    else {
-        Write-Verbose "[FUNCTION] Retrieving all customers."
-        $endpoint = "api/customers"
-    }
+        $endpoint = if ($SoId) { "api/service-orgs/$SoId/customers" } else { 'api/customers' }
 
-    $queryParameters = @{}
-    if ($PSBoundParameters.ContainsKey('PageNumber')) { $queryParameters["pageNumber"] = $PageNumber }
-    if ($PSBoundParameters.ContainsKey('PageSize')) { $queryParameters["pageSize"] = $PageSize }
-    if ($PSBoundParameters.ContainsKey('Select')) { $queryParameters["select"] = $Select }
-    if ($PSBoundParameters.ContainsKey('SortBy')) { $queryParameters["sortBy"] = $SortBy }
-    if ($PSBoundParameters.ContainsKey('SortOrder')) { $queryParameters["sortOrder"] = $SortOrder }
+        $queryParameters = @{}
+        if ($Select)                              { $queryParameters['select']    = $Select }
+        if ($SortBy)                              { $queryParameters['sortBy']    = $SortBy }
+        if ($SortOrder -and $SortOrder -ne 'asc') { $queryParameters['sortOrder'] = $SortOrder }
 
-    $queryString = if ($queryParameters.Count) {
-        Write-Verbose "[FUNCTION] Query parameters: $($queryParameters | Out-String)"
-        $paramsArray = $queryParameters.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }
-        "?" + ($paramsArray -join "&")
-    }
-    else {
-        ""
-    }
+        if ($All) {
+            Write-Verbose "[FUNCTION] Get-NCCustomers: paging $endpoint"
+            return Invoke-NCPagedRequest -Endpoint $endpoint -QueryParameters $queryParameters
+        }
 
-    $endpoint = "$endpoint$queryString"
+        if ($PageNumber) { $queryParameters['pageNumber'] = $PageNumber }
 
-    try {
-        Write-Verbose "[FUNCTION] Getting customer data from endpoint $endpoint."
-        $data = $api.Get($endpoint)
-        return $data
-    }
-    catch {
-        Write-Error "Error retrieving Customer data: $_"
+
+        if ($PageSize)   { $queryParameters['pageSize']   = $PageSize } else { $queryParameters['pageSize'] = 500 }
+
+        $endpoint += ConvertTo-NCQueryString -Parameters $queryParameters
+        Write-Verbose "[FUNCTION] Get-NCCustomers: $endpoint"
+        $api.Get($endpoint)
     }
 }

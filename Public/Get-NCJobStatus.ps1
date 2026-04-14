@@ -27,27 +27,25 @@ Website: https://github.com/soybigmac/NCRestAPI
 
 function Get-NCJobStatus {
     [CmdletBinding()]
+    [OutputType([pscustomobject])]
     param (
-        [Parameter(Mandatory = $true)]
-        [int]$OrgUnitId
+        [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName)]
+        [ValidateNotNullOrEmpty()]
+        [string]$OrgUnitId
     )
 
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
+    begin { $api = Get-NCRestApiInstance }
 
-    $api = $global:NCRestApiInstance
-    
+
+
+    process {
     Write-Verbose "[FUNCTION] Running Get-NCJobStatus."
     $endpoint = "api/org-units/$orgUnitId/job-statuses"
 
-    try {
         Write-Verbose "[FUNCTION] Retrieving job status with endpoint: $endpoint."
         $data = $api.Get($endpoint)
         return $data
-    }
-    catch {
-        Write-Error "Error retrieving job status: $_"
+
+
     }
 }

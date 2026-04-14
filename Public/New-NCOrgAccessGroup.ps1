@@ -46,15 +46,18 @@ Website: https://github.com/soybigmac/NCRestAPI
 #>
 
 function New-NCOrgAccessGroup {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Mandatory = $true)]
-        [int]$OrgUnitId,
+        [ValidateNotNullOrEmpty()]
+        [string]$OrgUnitId,
 
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$GroupName,
 
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$GroupDescription,
 
         [string[]]$OrgUnitIds,
@@ -64,12 +67,7 @@ function New-NCOrgAccessGroup {
         [string]$AutoIncludeNewOrgUnits
     )
 
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
-
-    $api = $global:NCRestApiInstance
+    $api = Get-NCRestApiInstance
         
     Write-Verbose "[FUNCTION] Running New-NCOrgAccessGroup."
     $body = [ordered]@{
@@ -82,12 +80,9 @@ function New-NCOrgAccessGroup {
 
     $endpoint = "api/org-units/$OrgUnitId/access-groups"
 
-    try {
         Write-Verbose "[FUNCTION] Creating new access group with endpoint: $endpoint."
+        if (-not $PSCmdlet.ShouldProcess($groupName, 'Create org access group')) { return }
+
         $response = $api.Post($endpoint, $Body)
         return $response
-    }
-    catch {
-        Write-Error "Error creating new access group: $_"
-    }
 }

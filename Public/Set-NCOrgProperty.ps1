@@ -1,71 +1,39 @@
 <#
 .SYNOPSIS
-Sets a custom property for an organization unit in the N-central API.
+Updates a custom property on an organization unit.
 
 .DESCRIPTION
-The `Set-NCOrgProperty` function sets a custom property for an organization unit in the N-central API.
-It requires parameters to specify the organization unit ID, property ID, and value.
-
-.PARAMETER OrgUnitId
-The organization unit ID for which the property will be set. This parameter is mandatory.
-
-.PARAMETER PropertyId
-The ID of the property to be set. This parameter is mandatory.
-
-.PARAMETER Value
-The value to be set for the property. This parameter is mandatory.
+PUT /api/org-units/{orgUnitId}/custom-properties/{propertyId}. All body fields in the
+`OrgUnitCustomPropertyModification` schema are supported; only bound parameters are sent.
 
 .EXAMPLE
-PS C:\> Set-NCOrgProperty -OrgUnitId 123 -PropertyId 456 -Value "New Value" -Verbose
-Sets a custom property for the organization unit with the ID 123 and property ID 456 with the value "New Value", with verbose output enabled.
-
-.INPUTS
-None. You cannot pipe input to this function.
-
-.OUTPUTS
-System.Object
-The function returns the response from the N-central API after setting the organization property.
-
-.NOTES
-Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Set-NCOrgProperty -OrgUnitId 1 -PropertyId 5 -Value 'retailer'
 #>
-
 function Set-NCOrgProperty {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param (
-        [Parameter(Mandatory = $true)]
-        [int]$OrgUnitId,
+        [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
+        [ValidateNotNullOrEmpty()]
+        [string]$OrgUnitId,
 
-        [Parameter(Mandatory = $true)]
-        [int]$PropertyId,
+        [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
+        [ValidateNotNullOrEmpty()]
+        [string]$PropertyId,
 
-        [Parameter(Mandatory = $true)]
-        [string]$Value
+        [string]$Value,
+        [string]$PropertyName,
+        [string]$PropertyType,
+        [string[]]$EnumeratedValueList
     )
+    begin { $api = Get-NCRestApiInstance }
+    process {
+        $body = @{}
+        if ($PSBoundParameters.ContainsKey('Value'))               { $body.value               = $Value }
+        if ($PSBoundParameters.ContainsKey('PropertyName'))        { $body.propertyName        = $PropertyName }
+        if ($PSBoundParameters.ContainsKey('PropertyType'))        { $body.propertyType        = $PropertyType }
+        if ($PSBoundParameters.ContainsKey('EnumeratedValueList')) { $body.enumeratedValueList = $EnumeratedValueList }
 
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
-
-    $api = $global:NCRestApiInstance
-    
-    Write-Verbose "[FUNCTION] Running Set-NCOrgProperty."
-    $body = @{
-        value = $Value
-    }
-
-    $endpoint = "api/org-units/$OrgUnitId/custom-properties/$PropertyId"
-
-    $bodyJson = $body | ConvertTo-Json -Depth 10
-
-    try {
-        Write-Verbose "[FUNCTION] Setting organization property with endpoint: $endpoint."
-        $response = $api.Put($endpoint, $bodyJson)
-        return $response
-    }
-    catch {
-        Write-Error "Error setting organization property: $_"
+        if (-not $PSCmdlet.ShouldProcess("$OrgUnitId/$PropertyId", 'Set org custom property')) { return }
+        $api.Put("api/org-units/$OrgUnitId/custom-properties/$PropertyId", $body)
     }
 }

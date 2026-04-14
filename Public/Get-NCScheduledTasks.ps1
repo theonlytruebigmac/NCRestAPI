@@ -1,60 +1,53 @@
 <#
 .SYNOPSIS
-Retrieves scheduled tasks for a device from the N-central API.
+Retrieves scheduled tasks from the N-central API.
 
 .DESCRIPTION
-The `Get-NCScheduledTasks` function retrieves scheduled tasks from the N-central API.
-It requires a task ID to specify the scheduled tasks to be retrieved.
+Returns all scheduled tasks, or a specific task by ID. Supports `-All` auto-pagination
+and pipeline input.
 
 .PARAMETER TaskId
-The Task ID for which to retrieve scheduled tasks. This parameter is mandatory.
+Specific scheduled task to retrieve.
+
+.PARAMETER All
+Auto-paginate across all scheduled tasks.
 
 .EXAMPLE
-PS C:\> Get-NCScheduledTasks -TaskId 12345 -Verbose
-Retrieves the scheduled tasks with the ID 12345 with verbose output enabled.
+Get-NCScheduledTasks -TaskId abc123
 
-.INPUTS
-None. You cannot pipe input to this function.
-
-.OUTPUTS
-System.Object
-The function returns scheduled task data from the N-central API.
-
-.NOTES
-Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+.EXAMPLE
+Get-NCScheduledTasks -All
 #>
-
 function Get-NCScheduledTasks {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'Page')]
+    [OutputType([pscustomobject])]
     param (
-        [int]$taskid
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [string]$TaskId,
+
+        [Parameter(ParameterSetName = 'All')]
+        [switch]$All,
+
+        [Parameter(ParameterSetName = 'Page')]
+        [int]$PageNumber,
+
+        [Parameter(ParameterSetName = 'Page')]
+        [int]$PageSize,
+
+        [string]$SortBy,
+        [ValidateSet('asc', 'desc')]
+        [string]$SortOrder = 'asc'
     )
-    
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
 
-    $api = $global:NCRestApiInstance
-    
-    Write-Verbose "[FUNCTION] Running Get-NCScheduledTasks."
+    begin { $api = Get-NCRestApiInstance }
 
-    if (-not $taskid) {
-        Write-Verbose "[FUNCTION] Getting all scheduled tasks."
-        $endpoint = "api/scheduled-tasks/"
-    }
-    else {
-        Write-Verbose "[FUNCTION] Getting scheduled tasks for task ID: $taskid."
-        $endpoint = "api/scheduled-tasks/$taskid"
-    }
-
-    try {
-        Write-Verbose "[FUNCTION] Retriving device tasks for endpoint: $endpoint."
-        $data = $api.Get($endpoint)
-        return $data
-    }
-    catch {
-        Write-Error "Error retrieving device tasks $_"
+    process {
+        if ($TaskId) {
+            return $api.Get("api/scheduled-tasks/$TaskId")
+        }
+        # N-central has no bulk "list all scheduled tasks" endpoint. /api/scheduled-tasks
+        # is a hypermedia navigation (returns only _links). Callers must fetch tasks per
+        # device via Get-NCDeviceScheduledTasks, or look up a known TaskId.
+        throw "Get-NCScheduledTasks requires -TaskId. N-central does not expose a bulk-list endpoint; use Get-NCDeviceScheduledTasks -DeviceId X to enumerate a device's tasks, or pipe devices in: Get-NCDevices -All | Get-NCDeviceScheduledTasks."
     }
 }

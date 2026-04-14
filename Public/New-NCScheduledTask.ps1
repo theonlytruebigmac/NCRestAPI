@@ -53,15 +53,18 @@ Website: https://github.com/soybigmac/NCRestAPI
 #>
 
 function New-NCScheduledTask {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'credentialType', Justification = 'Enum-like discriminator, not a password.')]
     param (
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$name,
 
         [Parameter(Mandatory = $true)]
         [int]$itemId,
 
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [ValidateSet("AutomationPolicy", "Script", "MacScript")]
         [string]$taskType,
 
@@ -72,32 +75,28 @@ function New-NCScheduledTask {
         [int]$deviceId,
 
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [ValidateSet("LocalSystem", "DeviceCredentials", "CustomCredentials")]
         [string]$credentialType,
 
-        [string]$username,
+        [pscredential]$Credential,
 
-        [string]$password
+        [array]$parameters = @()
     )
 
-    if (-not $global:NCRestApiInstance) {
-        Write-Error "NCRestAPI instance is not initialized. Please run Set-NCRestConfig first."
-        return
-    }
+    $api = Get-NCRestApiInstance
 
-    $api = $global:NCRestApiInstance
-    
     Write-Verbose "[FUNCTION] Running New-NCScheduledTask."
-    $credential = @{
-        type = $credentialType
-    }
+    # NOTE: local var named anything other than $Credential to avoid collision with
+    # the [pscredential]$Credential parameter (PowerShell var names are case-insensitive).
+    $credBody = @{ type = $credentialType }
 
-    if ($credentialType -eq "CustomCredentials") {
-        if (-not $username -or -not $password) {
-            throw "Username and password are required for CustomCredentials."
+    if ($credentialType -eq 'CustomCredentials') {
+        if (-not $Credential) {
+            throw "A -Credential (PSCredential) is required for CustomCredentials."
         }
-        $credential.username = $username
-        $credential.password = $password
+        $credBody.username = $Credential.UserName
+        $credBody.password = $Credential.GetNetworkCredential().Password
     }
 
     $body = @{
@@ -106,18 +105,10 @@ function New-NCScheduledTask {
         taskType   = $taskType
         customerId = $customerId
         deviceId   = $deviceId
-        credential = $credential
+        credential = $credBody
         parameters = $parameters
     }
 
-    $endpoint = "api/scheduled-tasks/direct"
-
-    try {
-        Write-Verbose "[FUNCTION] Creating scheduled task for endpoint: $endpoint."
-        $response = $api.Post($endpoint, $body)
-        return $response
-    }
-    catch {
-        Write-Error "Error creating scheduled task: $_"
-    }
+    if (-not $PSCmdlet.ShouldProcess($name, 'Create scheduled task')) { return }
+    $api.Post('api/scheduled-tasks/direct', $body)
 }
