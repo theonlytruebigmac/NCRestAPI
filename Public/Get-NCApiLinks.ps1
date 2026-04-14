@@ -28,6 +28,8 @@ function Get-NCApiLinks {
         [Parameter(ParameterSetName = 'CustomPsaTickets')][switch]$CustomPsaTickets,
         [Parameter(ParameterSetName = 'StandardPsa')][switch]$StandardPsa
     )
+
+    Write-Verbose "[FUNCTION] Get-NCApiLinks: invoked."
     $api = Get-NCRestApiInstance
     $endpoint = switch ($PSCmdlet.ParameterSetName) {
         'CustomPsa'        { 'api/custom-psa' }

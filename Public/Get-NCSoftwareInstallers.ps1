@@ -21,6 +21,7 @@ function Get-NCSoftwareInstallers {
     )
     begin { $api = Get-NCRestApiInstance }
     process {
+        Write-Verbose "[FUNCTION] Get-NCSoftwareInstallers: invoked."
         $q = @{}
         if ($SoftwareType)  { $q['softwareType']  = $SoftwareType }
         if ($InstallerType) { $q['installerType'] = $InstallerType }

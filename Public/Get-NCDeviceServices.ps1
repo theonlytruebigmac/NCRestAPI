@@ -22,7 +22,7 @@ The function returns the service monitor status for a device from the N-central 
 
 .NOTES
 Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Website: https://github.com/theonlytruebigmac/NCRestAPI
 #>
 
 function Get-NCDeviceServices {
@@ -31,7 +31,7 @@ function Get-NCDeviceServices {
     param (
         [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
-        [string]$deviceId
+        [string]$DeviceId
     )
 
     begin { $api = Get-NCRestApiInstance }
@@ -39,7 +39,7 @@ function Get-NCDeviceServices {
 
 
     process {
-    Write-Verbose "[FUNCTION] Running Get-NCDeviceServices."
+    Write-Verbose "[FUNCTION] Get-NCDeviceServices: invoked."
     $endpoint = "api/devices/$DeviceId/service-monitor-status"
 
         Write-Verbose "[FUNCTION] Retrieving device services for endpoint: $endpoint."

@@ -28,6 +28,7 @@ function Remove-NCMaintenanceWindows {
         $collected = [System.Collections.Generic.List[object]]::new()
     }
     process {
+        Write-Verbose "[FUNCTION] Remove-NCMaintenanceWindows: invoked."
         foreach ($id in $ScheduleIds) { $collected.Add($id) }
     }
     end {

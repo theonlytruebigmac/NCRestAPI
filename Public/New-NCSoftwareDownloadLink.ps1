@@ -21,6 +21,7 @@ function New-NCSoftwareDownloadLink {
     )
     begin { $api = Get-NCRestApiInstance }
     process {
+        Write-Verbose "[FUNCTION] New-NCSoftwareDownloadLink: invoked."
         if (-not $PSCmdlet.ShouldProcess($CustomerId, "Generate download link for $SoftwareId")) { return }
         $api.Post("api/customers/$CustomerId/software/installers", @{ softwareId = $SoftwareId })
     }

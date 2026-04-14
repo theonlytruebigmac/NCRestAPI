@@ -10,7 +10,7 @@ with exponential backoff, propagates rich error information, and scrubs tokens f
 
 .NOTES
 Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Website: https://github.com/theonlytruebigmac/NCRestAPI
 #>
 
 class NCRestAPI {
@@ -213,6 +213,7 @@ class NCRestAPI {
                         if ($ra) {
                             $raSeconds = 0
                             if ([int]::TryParse($ra, [ref]$raSeconds) -and $raSeconds -gt 0) {
+                                # Cap at 60s to avoid pathological server values hanging the caller.
                                 $delay = [math]::Min($raSeconds, 60)
                             } else {
                                 # HTTP-date is always GMT per RFC 7231; parse as UTC to avoid
@@ -233,8 +234,14 @@ class NCRestAPI {
                 }
                 $detail = $_.ErrorDetails.Message
                 if (-not $detail) { $detail = $_.Exception.Message }
-                $this.Log("[NCRESTAPI] $method $endpoint failed (HTTP $status): $detail")
-                throw "[NCRESTAPI] $method $endpoint failed (HTTP $status): $detail"
+                $hint = switch ($status) {
+                    401     { ' — check ApiToken or rerun Set-NCRestConfig.' }
+                    403     { ' — token lacks permission for this endpoint.' }
+                    404     { ' — verify BaseUrl and endpoint path.' }
+                    default { '' }
+                }
+                $this.Log("[NCRESTAPI] $method $endpoint failed (HTTP $status): $detail$hint")
+                throw "[NCRESTAPI] $method $endpoint failed (HTTP $status): $detail$hint"
             }
         }
         return $null
@@ -248,6 +255,9 @@ class NCRestAPI {
     [object] Patch([string]$endpoint, [object]$body)         { return $this.Invoke('Patch',  $endpoint, $body) }
 
     [void] Dispose() {
+        if ($this.ApiToken)     { $this.ApiToken.Dispose() }
+        if ($this.AccessToken)  { $this.AccessToken.Dispose() }
+        if ($this.RefreshToken) { $this.RefreshToken.Dispose() }
         $this.ApiToken = $null
         $this.AccessToken = $null
         $this.RefreshToken = $null
@@ -255,13 +265,36 @@ class NCRestAPI {
     }
 }
 
+function Add-NCCommonQuery {
+    <#
+    .SYNOPSIS
+    Mutates $Parameters to include the standard filter/select/sort query params.
+    Skips sortOrder when it equals the server default ('asc') to keep URLs minimal.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][hashtable]$Parameters,
+        [int]$FilterId,
+        [string]$Select,
+        [string]$SortBy,
+        [string]$SortOrder
+    )
+    if ($FilterId)                            { $Parameters['filterId']  = $FilterId }
+    if ($Select)                              { $Parameters['select']    = $Select }
+    if ($SortBy)                              { $Parameters['sortBy']    = $SortBy }
+    if ($SortOrder -and $SortOrder -ne 'asc') { $Parameters['sortOrder'] = $SortOrder }
+}
+
 function ConvertTo-NCQueryString {
     [CmdletBinding()]
     param([hashtable]$Parameters)
     if (-not $Parameters -or $Parameters.Count -eq 0) { return '' }
     $pairs = foreach ($kv in $Parameters.GetEnumerator()) {
-        if ($null -eq $kv.Value -or $kv.Value -eq '') { continue }
-        '{0}={1}' -f [uri]::EscapeDataString([string]$kv.Key), [uri]::EscapeDataString([string]$kv.Value)
+        # Cast through [string] before the empty-check so integer 0 (which PowerShell
+        # coerces to '' in a direct -eq compare) survives as "0".
+        $s = [string]$kv.Value
+        if ([string]::IsNullOrEmpty($s)) { continue }
+        '{0}={1}' -f [uri]::EscapeDataString([string]$kv.Key), [uri]::EscapeDataString($s)
     }
     if (-not $pairs) { return '' }
     return '?' + ($pairs -join '&')

@@ -41,6 +41,8 @@ function Get-NCOrgUnits {
     begin { $api = Get-NCRestApiInstance }
 
     process {
+
+        Write-Verbose "[FUNCTION] Get-NCOrgUnits: invoked."
         if ($OrgUnitId -and $Children) {
             return $api.Get("api/org-units/$OrgUnitId/children")
         }
@@ -50,8 +52,7 @@ function Get-NCOrgUnits {
 
         $endpoint = 'api/org-units'
         $queryParameters = @{}
-        if ($SortBy)                              { $queryParameters['sortBy']    = $SortBy }
-        if ($SortOrder -and $SortOrder -ne 'asc') { $queryParameters['sortOrder'] = $SortOrder }
+        Add-NCCommonQuery -Parameters $queryParameters -SortBy $SortBy -SortOrder $SortOrder
 
         if ($All) {
             return Invoke-NCPagedRequest -Endpoint $endpoint -QueryParameters $queryParameters

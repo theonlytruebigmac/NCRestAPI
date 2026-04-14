@@ -3,6 +3,8 @@
     ExcludeRules = @(
         'PSAvoidUsingWriteHost',
         'PSUseShouldProcessForStateChangingFunctions',
+        # Intentional: Set-NCRestConfig mirrors the instance to $global: so scripts
+        # dot-sourcing module files without loading the module can still reach it.
         'PSAvoidGlobalVars',
         'PSUseSingularNouns',
         'PSUseBOMForUnicodeEncodedFile',

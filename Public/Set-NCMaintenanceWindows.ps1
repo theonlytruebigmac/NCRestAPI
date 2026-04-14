@@ -18,6 +18,8 @@ function Set-NCMaintenanceWindows {
         [Parameter(Mandatory)]
         [object[]]$MaintenanceWindows
     )
+
+    Write-Verbose "[FUNCTION] Set-NCMaintenanceWindows: invoked."
     $api = Get-NCRestApiInstance
     $body = @{ maintenanceWindows = $MaintenanceWindows }
     $ids = ($MaintenanceWindows | ForEach-Object { $_.scheduleId }) -join ','

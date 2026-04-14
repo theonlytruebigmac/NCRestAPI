@@ -23,6 +23,8 @@ function New-NCMaintenanceWindows {
         [Parameter(Mandatory)]
         [object[]]$MaintenanceWindows
     )
+
+    Write-Verbose "[FUNCTION] New-NCMaintenanceWindows: invoked."
     $api = Get-NCRestApiInstance
     $body = @{
         deviceIDs          = $DeviceIds

@@ -74,7 +74,7 @@ The function returns the response from the N-central API after creating the cust
 
 .NOTES
 Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Website: https://github.com/theonlytruebigmac/NCRestAPI
 #>
 
 function New-NCCustomer {
@@ -82,52 +82,37 @@ function New-NCCustomer {
     param (
         [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
-        [string]$soId,
-
+        [string]$SoId,
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [string]$customerName,
-
+        [string]$CustomerName,
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [string]$contactFirstName,
-
+        [string]$ContactFirstName,
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [string]$contactLastName,
-
-        [string]$licenseType,
-
-        [string]$externalId,
-
-        [string]$phone,
-
-        [string]$contactTitle,
-
-        [string]$contactEmail,
-
-        [string]$contactPhone,
-
-        [string]$contactPhoneExt,
-
-        [string]$contactDepartment,
-
-        [string]$street1,
-
-        [string]$street2,
-
-        [string]$city,
-
-        [string]$stateProv,
-
-        [string]$country,
-
-        [string]$postalCode
+        [string]$ContactLastName,
+        [string]$LicenseType,
+        [string]$ExternalId,
+        [string]$Phone,
+        [string]$ContactTitle,
+        [string]$ContactEmail,
+        [string]$ContactPhone,
+        [string]$ContactPhoneExt,
+        [string]$ContactDepartment,
+        [string]$Street1,
+        [string]$Street2,
+        [string]$City,
+        [string]$StateProv,
+        [string]$Country,
+        [string]$PostalCode
     )
 
     begin { $api = Get-NCRestApiInstance }
 
     process {
+
+        Write-Verbose "[FUNCTION] New-NCCustomer: invoked."
         $body = [ordered]@{
             customerName     = $customerName
             contactFirstName = $contactFirstName

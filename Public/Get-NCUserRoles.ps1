@@ -16,7 +16,7 @@ function Get-NCUserRoles {
     param (
         [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
-        [Alias('CustId', 'customerId')]
+        [Alias('customerId', 'orgUnitId')]
         [string]$OrgUnitId,
 
         [Parameter(ValueFromPipelineByPropertyName)]
@@ -49,10 +49,7 @@ function Get-NCUserRoles {
         $endpoint = "api/org-units/$OrgUnitId/user-roles"
 
         $queryParameters = @{}
-        if ($FilterId)                            { $queryParameters['filterId']  = $FilterId }
-        if ($Select)                              { $queryParameters['select']    = $Select }
-        if ($SortBy)                              { $queryParameters['sortBy']    = $SortBy }
-        if ($SortOrder -and $SortOrder -ne 'asc') { $queryParameters['sortOrder'] = $SortOrder }
+        Add-NCCommonQuery -Parameters $queryParameters -FilterId $FilterId -Select $Select -SortBy $SortBy -SortOrder $SortOrder
 
         if ($All) {
             return Invoke-NCPagedRequest -Endpoint $endpoint -QueryParameters $queryParameters

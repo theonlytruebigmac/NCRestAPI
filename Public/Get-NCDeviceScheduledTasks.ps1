@@ -21,6 +21,7 @@ function Get-NCDeviceScheduledTasks {
     )
     begin { $api = Get-NCRestApiInstance }
     process {
+        Write-Verbose "[FUNCTION] Get-NCDeviceScheduledTasks: invoked."
         $api.Get("api/devices/$DeviceId/scheduled-tasks")
     }
 }

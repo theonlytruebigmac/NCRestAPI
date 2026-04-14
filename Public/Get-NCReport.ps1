@@ -18,6 +18,7 @@ function Get-NCReport {
     )
     begin { $api = Get-NCRestApiInstance }
     process {
+        Write-Verbose "[FUNCTION] Get-NCReport: invoked."
         $api.Get("api/report/$ReportId")
     }
 }

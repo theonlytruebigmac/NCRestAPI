@@ -38,9 +38,7 @@ function Get-NCFilters {
 
     $queryParameters = @{}
     if ($ViewScope -and $ViewScope -ne 'ALL')   { $queryParameters['viewScope'] = $ViewScope }
-    if ($Select)                                { $queryParameters['select']    = $Select }
-    if ($SortBy)                                { $queryParameters['sortBy']    = $SortBy }
-    if ($SortOrder -and $SortOrder -ne 'asc')   { $queryParameters['sortOrder'] = $SortOrder }
+    Add-NCCommonQuery -Parameters $queryParameters -Select $Select -SortBy $SortBy -SortOrder $SortOrder
 
     if ($All) {
         return Invoke-NCPagedRequest -Endpoint $endpoint -QueryParameters $queryParameters

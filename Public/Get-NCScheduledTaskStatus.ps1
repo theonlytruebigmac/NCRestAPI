@@ -36,7 +36,7 @@ The function returns the status of the specified task or the detailed statuses p
 
 .NOTES
 Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Website: https://github.com/theonlytruebigmac/NCRestAPI
 #>
 
 function Get-NCScheduledTaskStatus {

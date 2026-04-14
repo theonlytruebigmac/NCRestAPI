@@ -23,14 +23,14 @@ An array of organization unit IDs to be associated with the access group.
 An array of user IDs to be associated with the access group.
 
 .PARAMETER AutoIncludeNewOrgUnits
-Specifies whether new organization units should be automatically included in the access group.
+Switch that auto-includes newly-created org units in the access group.
 
 .EXAMPLE
 PS C:\> New-NCOrgAccessGroup -OrgUnitId 123 -GroupName "Admins" -GroupDescription "Admin access group" -Verbose
 Creates a new organization access group named "Admins" under the organization unit ID 123 with the description "Admin access group", with verbose output enabled.
 
 .EXAMPLE
-PS C:\> New-NCOrgAccessGroup -OrgUnitId 123 -GroupName "Admins" -GroupDescription "Admin access group" -OrgUnitIds @("OU1", "OU2") -UserIds @("User1", "User2") -AutoIncludeNewOrgUnits "true"
+PS C:\> New-NCOrgAccessGroup -OrgUnitId 123 -GroupName "Admins" -GroupDescription "Admin access group" -OrgUnitIds @("OU1", "OU2") -UserIds @("User1", "User2") -AutoIncludeNewOrgUnits
 Creates a new organization access group named "Admins" under the organization unit ID 123 with the description "Admin access group", and associates specified organization units and users with the group, with new organization units being automatically included.
 
 .INPUTS
@@ -42,7 +42,7 @@ The function returns the response from the N-central API after creating the orga
 
 .NOTES
 Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Website: https://github.com/theonlytruebigmac/NCRestAPI
 #>
 
 function New-NCOrgAccessGroup {
@@ -64,25 +64,22 @@ function New-NCOrgAccessGroup {
 
         [string[]]$UserIds,
 
-        [string]$AutoIncludeNewOrgUnits
+        [switch]$AutoIncludeNewOrgUnits
     )
 
     $api = Get-NCRestApiInstance
-        
-    Write-Verbose "[FUNCTION] Running New-NCOrgAccessGroup."
+
+    Write-Verbose "[FUNCTION] New-NCOrgAccessGroup: invoked."
     $body = [ordered]@{
         groupName              = $GroupName
         groupDescription       = $GroupDescription
         orgUnitIds             = $OrgUnitIds
         userIds                = $UserIds
-        autoIncludeNewOrgUnits = $AutoIncludeNewOrgUnits
+        autoIncludeNewOrgUnits = [bool]$AutoIncludeNewOrgUnits
     }
 
     $endpoint = "api/org-units/$OrgUnitId/access-groups"
 
-        Write-Verbose "[FUNCTION] Creating new access group with endpoint: $endpoint."
-        if (-not $PSCmdlet.ShouldProcess($groupName, 'Create org access group')) { return }
-
-        $response = $api.Post($endpoint, $Body)
-        return $response
+    if (-not $PSCmdlet.ShouldProcess($GroupName, 'Create org access group')) { return }
+    $api.Post($endpoint, $body)
 }

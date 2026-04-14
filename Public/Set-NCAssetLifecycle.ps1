@@ -32,6 +32,7 @@ function Set-NCAssetLifecycle {
     )
     begin { $api = Get-NCRestApiInstance }
     process {
+        Write-Verbose "[FUNCTION] Set-NCAssetLifecycle: invoked."
         $body = @{
             assetTag                = $AssetTag
             cost                    = $Cost

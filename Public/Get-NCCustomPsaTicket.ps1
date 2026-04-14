@@ -28,6 +28,7 @@ function Get-NCCustomPsaTicket {
     )
     begin { $api = Get-NCRestApiInstance }
     process {
+        Write-Verbose "[FUNCTION] Get-NCCustomPsaTicket: invoked."
         $body = @{
             username = $Credential.UserName
             password = $Credential.GetNetworkCredential().Password

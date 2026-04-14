@@ -18,6 +18,7 @@ function Get-NCAssetLifecycle {
     )
     begin { $api = Get-NCRestApiInstance }
     process {
+        Write-Verbose "[FUNCTION] Get-NCAssetLifecycle: invoked."
         $api.Get("api/devices/$DeviceId/assets/lifecycle-info")
     }
 }

@@ -39,7 +39,7 @@ The function returns the response from the N-central API after creating the devi
 
 .NOTES
 Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Website: https://github.com/theonlytruebigmac/NCRestAPI
 #>
 
 function New-NCDeviceAccessGroup {
@@ -63,20 +63,17 @@ function New-NCDeviceAccessGroup {
     )
 
     $api = Get-NCRestApiInstance
-        
-    Write-Verbose "[FUNCTION] Running New-NCDeviceAccessGroup."
+
+    Write-Verbose "[FUNCTION] New-NCDeviceAccessGroup: invoked."
     $body = [ordered]@{
         groupName        = $GroupName
         groupDescription = $GroupDescription
         deviceIds        = $DeviceIds
-        userIds          = $userIds
+        userIds          = $UserIds
     }
 
-    $endpoint = "api/org-units/$orgUnitId/device-access-groups"
+    $endpoint = "api/org-units/$OrgUnitId/device-access-groups"
 
-        Write-Verbose "[FUNCTION] Creating new device access group with endpoint: $endpoint."
-        if (-not $PSCmdlet.ShouldProcess($groupName, 'Create device access group')) { return }
-
-        $response = $api.Post($endpoint, $Body)
-        return $response
+    if (-not $PSCmdlet.ShouldProcess($GroupName, 'Create device access group')) { return }
+    $api.Post($endpoint, $body)
 }

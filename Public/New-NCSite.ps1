@@ -74,7 +74,7 @@ The function returns the response from the N-central API after creating the site
 
 .NOTES
 Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Website: https://github.com/theonlytruebigmac/NCRestAPI
 #>
 
 function New-NCSite {
@@ -82,52 +82,35 @@ function New-NCSite {
     param (
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [string]$customerId,
-
+        [string]$CustomerId,
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [string]$siteName,
-
+        [string]$SiteName,
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [string]$contactFirstName,
-
+        [string]$ContactFirstName,
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [string]$contactLastName,
-
-        [string]$licenseType,
-
-        [string]$externalId,
-
-        [string]$phone,
-
-        [string]$contactTitle,
-
-        [string]$contactEmail,
-
-        [string]$contactPhone,
-
-        [string]$contactPhoneExt,
-
-        [string]$contactDepartment,
-
-        [string]$street1,
-
-        [string]$street2,
-
-        [string]$city,
-
-        [string]$stateProv,
-
-        [string]$country,
-
-        [string]$postalCode
+        [string]$ContactLastName,
+        [string]$LicenseType,
+        [string]$ExternalId,
+        [string]$Phone,
+        [string]$ContactTitle,
+        [string]$ContactEmail,
+        [string]$ContactPhone,
+        [string]$ContactPhoneExt,
+        [string]$ContactDepartment,
+        [string]$Street1,
+        [string]$Street2,
+        [string]$City,
+        [string]$StateProv,
+        [string]$Country,
+        [string]$PostalCode
     )
 
     $api = Get-NCRestApiInstance
 
-    Write-Verbose "[FUNCTION] Running New-NCSite."
+    Write-Verbose "[FUNCTION] New-NCSite: invoked."
     $body = [ordered]@{
         siteName         = $siteName
         contactFirstName = $contactFirstName

@@ -22,7 +22,7 @@ The function returns device assets data from the N-central API.
 
 .NOTES
 Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Website: https://github.com/theonlytruebigmac/NCRestAPI
 #>
 
 function Get-NCDeviceAssets {
@@ -39,7 +39,7 @@ function Get-NCDeviceAssets {
 
 
     process {
-    Write-Verbose "[FUNCTION] Running Get-NCDeviceAssets."
+    Write-Verbose "[FUNCTION] Get-NCDeviceAssets: invoked."
     $endpoint = "api/devices/$DeviceId/assets"
 
         Write-Verbose "[FUNCTION] Retrieving device assets with endpoint: $endpoint."

@@ -81,6 +81,7 @@ function Set-NCDefaultOrgProperty {
     )
     begin { $api = Get-NCRestApiInstance }
     process {
+        Write-Verbose "[FUNCTION] Set-NCDefaultOrgProperty: invoked."
         $body = [ordered]@{
             propagate       = [bool]$Propagate
             propertyId      = $PropertyId

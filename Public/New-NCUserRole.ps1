@@ -45,6 +45,7 @@ function New-NCUserRole {
     )
     begin { $api = Get-NCRestApiInstance }
     process {
+        Write-Verbose "[FUNCTION] New-NCUserRole: invoked."
         $body = [ordered]@{
             roleName      = $RoleName
             description   = $Description

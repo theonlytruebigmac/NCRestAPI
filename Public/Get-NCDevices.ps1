@@ -77,10 +77,7 @@ function Get-NCDevices {
         $endpoint = if ($OrgUnitId) { "api/org-units/$OrgUnitId/devices" } else { 'api/devices' }
 
         $queryParams = @{}
-        if ($FilterId)                            { $queryParams['filterId']  = $FilterId }
-        if ($Select)                              { $queryParams['select']    = $Select }
-        if ($SortBy)                              { $queryParams['sortBy']    = $SortBy }
-        if ($SortOrder -and $SortOrder -ne 'asc') { $queryParams['sortOrder'] = $SortOrder }
+        Add-NCCommonQuery -Parameters $queryParams -FilterId $FilterId -Select $Select -SortBy $SortBy -SortOrder $SortOrder
 
         if ($All) {
             Write-Verbose "[FUNCTION] Get-NCDevices: paging $endpoint"

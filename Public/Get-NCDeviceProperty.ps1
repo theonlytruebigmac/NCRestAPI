@@ -50,10 +50,7 @@ function Get-NCDeviceProperty {
         $endpoint = "api/devices/$DeviceId/custom-properties"
 
         $queryParameters = @{}
-        if ($FilterId)                            { $queryParameters['filterId']  = $FilterId }
-        if ($Select)                              { $queryParameters['select']    = $Select }
-        if ($SortBy)                              { $queryParameters['sortBy']    = $SortBy }
-        if ($SortOrder -and $SortOrder -ne 'asc') { $queryParameters['sortOrder'] = $SortOrder }
+        Add-NCCommonQuery -Parameters $queryParameters -FilterId $FilterId -Select $Select -SortBy $SortBy -SortOrder $SortOrder
 
         if ($All) {
             return Invoke-NCPagedRequest -Endpoint $endpoint -QueryParameters $queryParameters

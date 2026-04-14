@@ -42,6 +42,8 @@ function Get-NCScheduledTasks {
     begin { $api = Get-NCRestApiInstance }
 
     process {
+
+        Write-Verbose "[FUNCTION] Get-NCScheduledTasks: invoked."
         if ($TaskId) {
             return $api.Get("api/scheduled-tasks/$TaskId")
         }

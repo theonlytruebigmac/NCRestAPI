@@ -25,7 +25,7 @@ The function returns the default organization property data from the N-central A
 
 .NOTES
 Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Website: https://github.com/theonlytruebigmac/NCRestAPI
 #>
 
 function Get-NCDefaultOrgProperty {
@@ -43,7 +43,7 @@ function Get-NCDefaultOrgProperty {
 
     $api = Get-NCRestApiInstance
     
-    Write-Verbose "[FUNCTION] Running Get-NCDefaultOrgProperty."
+    Write-Verbose "[FUNCTION] Get-NCDefaultOrgProperty: invoked."
     $endpoint = "api/org-units/$OrgUnitId/org-custom-property-defaults/$propertyId"
 
         Write-Verbose "[FUNCTION] Retrieving default organization property with endpoint: $endpoint."

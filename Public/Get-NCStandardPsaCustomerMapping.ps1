@@ -18,6 +18,7 @@ function Get-NCStandardPsaCustomerMapping {
     )
     begin { $api = Get-NCRestApiInstance }
     process {
+        Write-Verbose "[FUNCTION] Get-NCStandardPsaCustomerMapping: invoked."
         $api.Get("api/standard-psa/customer-mapping/$CustomerId")
     }
 }

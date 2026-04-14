@@ -29,6 +29,8 @@ function New-NCPatchComparisonReport {
         [string[]]$PatchApprovals,
         [string[]]$PatchCategories
     )
+
+    Write-Verbose "[FUNCTION] New-NCPatchComparisonReport: invoked."
     $api = Get-NCRestApiInstance
     $body = @{ startDate = $StartDate }
     if ($InstallStatuses) { $body.installStatuses = $InstallStatuses }

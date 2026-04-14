@@ -54,8 +54,7 @@ function Get-NCServiceOrgs {
         $endpoint = if ($SoId) { "api/service-orgs/$SoId/customers" } else { 'api/service-orgs' }
 
         $queryParameters = @{}
-        if ($SortBy)                              { $queryParameters['sortBy']    = $SortBy }
-        if ($SortOrder -and $SortOrder -ne 'asc') { $queryParameters['sortOrder'] = $SortOrder }
+        Add-NCCommonQuery -Parameters $queryParameters -SortBy $SortBy -SortOrder $SortOrder
 
         if ($All) {
             Write-Verbose "[FUNCTION] Get-NCServiceOrgs: paging $endpoint"

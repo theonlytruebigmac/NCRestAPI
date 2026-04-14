@@ -26,6 +26,7 @@ function Update-NCAssetLifecycle {
     )
     begin { $api = Get-NCRestApiInstance }
     process {
+        Write-Verbose "[FUNCTION] Update-NCAssetLifecycle: invoked."
         $body = @{}
         if ($PSBoundParameters.ContainsKey('AssetTag'))                { $body.assetTag                = $AssetTag }
         if ($PSBoundParameters.ContainsKey('Cost'))                    { $body.cost                    = $Cost }

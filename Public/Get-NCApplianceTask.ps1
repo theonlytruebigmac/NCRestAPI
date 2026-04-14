@@ -21,7 +21,7 @@ The function returns the appliance-task information from the specified N-central
 
 .NOTES
 Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Website: https://github.com/theonlytruebigmac/NCRestAPI
 #>
 
 function Get-NCApplianceTask {
@@ -30,7 +30,7 @@ function Get-NCApplianceTask {
     param (
         [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
-        [string]$taskId
+        [string]$TaskId
     )
 
     begin { $api = Get-NCRestApiInstance }
@@ -38,7 +38,7 @@ function Get-NCApplianceTask {
 
 
     process {
-    Write-Verbose "[FUNCTION] Running Get-NCApplianceTask."
+    Write-Verbose "[FUNCTION] Get-NCApplianceTask: invoked."
     $endpoint = "api/appliance-tasks/$taskId"
 
         Write-Verbose "[FUNCTION] Retrieving appliance task data from endpoint $endpoint."

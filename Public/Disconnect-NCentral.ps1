@@ -8,5 +8,6 @@ Disconnect-NCentral
 function Disconnect-NCentral {
     [CmdletBinding()]
     param ()
+    Write-Verbose "[FUNCTION] Disconnect-NCentral: invoked."
     Get-NCRestApiInfo -Kill
 }

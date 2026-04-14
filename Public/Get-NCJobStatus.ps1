@@ -22,7 +22,7 @@ The function returns job status data for an organization unit from the N-central
 
 .NOTES
 Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Website: https://github.com/theonlytruebigmac/NCRestAPI
 #>
 
 function Get-NCJobStatus {
@@ -39,7 +39,7 @@ function Get-NCJobStatus {
 
 
     process {
-    Write-Verbose "[FUNCTION] Running Get-NCJobStatus."
+    Write-Verbose "[FUNCTION] Get-NCJobStatus: invoked."
     $endpoint = "api/org-units/$orgUnitId/job-statuses"
 
         Write-Verbose "[FUNCTION] Retrieving job status with endpoint: $endpoint."

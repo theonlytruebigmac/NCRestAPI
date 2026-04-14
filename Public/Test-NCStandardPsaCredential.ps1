@@ -24,6 +24,8 @@ function Test-NCStandardPsaCredential {
         [Parameter(Mandatory)]
         [pscredential]$Credential
     )
+
+    Write-Verbose "[FUNCTION] Test-NCStandardPsaCredential: invoked."
     $api = Get-NCRestApiInstance
     $body = @{
         username = $Credential.UserName

@@ -45,6 +45,7 @@ function Set-NCDeviceProperty {
     )
     begin { $api = Get-NCRestApiInstance }
     process {
+        Write-Verbose "[FUNCTION] Set-NCDeviceProperty: invoked."
         $body = @{}
         if ($PSBoundParameters.ContainsKey('Value'))               { $body.value               = $Value }
         if ($PSBoundParameters.ContainsKey('PropertyName'))        { $body.propertyName        = $PropertyName }

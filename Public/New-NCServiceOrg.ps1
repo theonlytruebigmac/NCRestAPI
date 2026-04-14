@@ -68,7 +68,7 @@ The function returns the response from the N-central API after creating the serv
 
 .NOTES
 Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Website: https://github.com/theonlytruebigmac/NCRestAPI
 #>
 
 function New-NCServiceOrg {
@@ -115,7 +115,7 @@ function New-NCServiceOrg {
 
     $api = Get-NCRestApiInstance
 
-    Write-Verbose "[FUNCTION] Running New-NCServiceOrg."
+    Write-Verbose "[FUNCTION] New-NCServiceOrg: invoked."
     $body = [ordered]@{
         soName           = $SoName
         contactFirstName = $ContactFirstName

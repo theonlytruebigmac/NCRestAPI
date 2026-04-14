@@ -27,6 +27,7 @@ function Set-NCOrgProperty {
     )
     begin { $api = Get-NCRestApiInstance }
     process {
+        Write-Verbose "[FUNCTION] Set-NCOrgProperty: invoked."
         $body = @{}
         if ($PSBoundParameters.ContainsKey('Value'))               { $body.value               = $Value }
         if ($PSBoundParameters.ContainsKey('PropertyName'))        { $body.propertyName        = $PropertyName }

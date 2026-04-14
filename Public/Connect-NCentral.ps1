@@ -56,6 +56,8 @@ function Connect-NCentral {
 
         [switch]$PassThru
     )
+
+    Write-Verbose "[FUNCTION] Connect-NCentral: invoked."
     $setParams = @{} + $PSBoundParameters
     $null = $setParams.Remove('PassThru')
     Set-NCRestConfig @setParams

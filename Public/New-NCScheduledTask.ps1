@@ -20,25 +20,22 @@ Specifies the ID of the customer.
 .PARAMETER deviceId
 Specifies the ID of the device.
 
-.PARAMETER credentialType
+.PARAMETER CredentialType
 Specifies the type of credential for the task. Supported values are: LocalSystem, DeviceCredentials, CustomCredentials.
 
-.PARAMETER username
-Specifies the username for the credential (required for CustomCredentials).
+.PARAMETER Credential
+A [pscredential] supplying the username/password. Required when -CredentialType is CustomCredentials.
 
-.PARAMETER password
-Specifies the password for the credential (required for CustomCredentials).
-
-.PARAMETER parameters
+.PARAMETER Parameters
 Specifies the parameters for the task.
 
 .EXAMPLE
-PS C:\> New-NCScheduledTask -name "Test Task" -itemId 1 -taskType "Script" -customerId 100 -deviceId 987654321 -credentialType "LocalSystem" -parameters @(@{name="CommandLine"; value="killprocess.vbs /process:33022"}) -Verbose
+PS C:\> New-NCScheduledTask -Name "Test Task" -ItemId 1 -TaskType "Script" -CustomerId 100 -DeviceId 987654321 -CredentialType "LocalSystem" -Parameters @(@{name="CommandLine"; value="killprocess.vbs /process:33022"}) -Verbose
 Creates a direct-support scheduled task with the specified parameters and enables verbose output.
 
 .EXAMPLE
-PS C:\> New-NCScheduledTask -name "Test Task" -itemId 1 -taskType "Script" -customerId 100 -deviceId 987654321 -credentialType "CustomCredentials" -username "admin" -password "password" -parameters @(@{name="CommandLine"; value="killprocess.vbs /process:33022"}) -Verbose
-Creates a direct-support scheduled task with custom credentials and specified parameters and enables verbose output.
+PS C:\> New-NCScheduledTask -Name "Test Task" -ItemId 1 -TaskType "Script" -CustomerId 100 -DeviceId 987654321 -CredentialType "CustomCredentials" -Credential (Get-Credential) -Parameters @(@{name="CommandLine"; value="killprocess.vbs /process:33022"}) -Verbose
+Creates a direct-support scheduled task with custom credentials (prompted via Get-Credential).
 
 .INPUTS
 None. You cannot pipe input to this function.
@@ -49,7 +46,7 @@ The function returns the created scheduled task information from the specified N
 
 .NOTES
 Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Website: https://github.com/theonlytruebigmac/NCRestAPI
 #>
 
 function New-NCScheduledTask {
@@ -58,40 +55,35 @@ function New-NCScheduledTask {
     param (
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [string]$name,
-
+        [string]$Name,
         [Parameter(Mandatory = $true)]
-        [int]$itemId,
+        [int]$ItemId,
 
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [ValidateSet("AutomationPolicy", "Script", "MacScript")]
-        [string]$taskType,
+        [string]$TaskType,
+        [Parameter(Mandatory = $true)]
+        [int]$CustomerId,
 
         [Parameter(Mandatory = $true)]
-        [int]$customerId,
-
-        [Parameter(Mandatory = $true)]
-        [int]$deviceId,
+        [int]$DeviceId,
 
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [ValidateSet("LocalSystem", "DeviceCredentials", "CustomCredentials")]
-        [string]$credentialType,
-
+        [string]$CredentialType,
         [pscredential]$Credential,
 
-        [array]$parameters = @()
+        [array]$Parameters = @()
     )
 
     $api = Get-NCRestApiInstance
 
-    Write-Verbose "[FUNCTION] Running New-NCScheduledTask."
-    # NOTE: local var named anything other than $Credential to avoid collision with
-    # the [pscredential]$Credential parameter (PowerShell var names are case-insensitive).
-    $credBody = @{ type = $credentialType }
+    Write-Verbose "[FUNCTION] New-NCScheduledTask: invoked."
+    $credBody = @{ type = $CredentialType }
 
-    if ($credentialType -eq 'CustomCredentials') {
+    if ($CredentialType -eq 'CustomCredentials') {
         if (-not $Credential) {
             throw "A -Credential (PSCredential) is required for CustomCredentials."
         }
@@ -100,15 +92,15 @@ function New-NCScheduledTask {
     }
 
     $body = @{
-        name       = $name
-        itemId     = $itemId
-        taskType   = $taskType
-        customerId = $customerId
-        deviceId   = $deviceId
+        name       = $Name
+        itemId     = $ItemId
+        taskType   = $TaskType
+        customerId = $CustomerId
+        deviceId   = $DeviceId
         credential = $credBody
-        parameters = $parameters
+        parameters = $Parameters
     }
 
-    if (-not $PSCmdlet.ShouldProcess($name, 'Create scheduled task')) { return }
+    if (-not $PSCmdlet.ShouldProcess($Name, 'Create scheduled task')) { return }
     $api.Post('api/scheduled-tasks/direct', $body)
 }

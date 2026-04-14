@@ -58,9 +58,7 @@ function Get-NCSites {
         $endpoint = if ($CustId) { "api/customers/$CustId/sites" } else { 'api/sites' }
 
         $queryParameters = @{}
-        if ($Select)                              { $queryParameters['select']    = $Select }
-        if ($SortBy)                              { $queryParameters['sortBy']    = $SortBy }
-        if ($SortOrder -and $SortOrder -ne 'asc') { $queryParameters['sortOrder'] = $SortOrder }
+        Add-NCCommonQuery -Parameters $queryParameters -Select $Select -SortBy $SortBy -SortOrder $SortOrder
 
         if ($All) {
             Write-Verbose "[FUNCTION] Get-NCSites: paging $endpoint"

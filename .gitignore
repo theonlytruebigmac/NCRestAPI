@@ -40,7 +40,4 @@ yarn.lock
 *.o
 *.so
 
-# Ignore Tests folder
-Tests/
-
 NCRestAPI.code-workspace

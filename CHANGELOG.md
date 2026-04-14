@@ -2,7 +2,7 @@
 
 ## 1.7.1
 
-### Fixed (surfaced by a full cmdlet matrix run against nfr.n-able.com)
+### Fixed (surfaced by a full cmdlet matrix run against demo server)
 
 - Removed 37 redundant `[Alias()]` entries whose value was case-insensitively the
   same as the parameter name (e.g. `[Alias("DeviceId")] [string]$deviceId`).
@@ -141,7 +141,7 @@ not surprising:
 ### Spec alignment
 
 Cross-checked every module endpoint and body against the N-central OpenAPI spec at
-`sedemo.focusmsp.net/api-explorer/openapi-spec.json`. The module now covers 55 of the
+`/api-explorer/openapi-spec.json`. The module now covers 55 of the
 67 spec paths; the remaining 12 are either internal auth endpoints used by the class
 or navigational link endpoints (`/api`, `/api/custom-psa`, `/api/standard-psa`, etc).
 

@@ -81,6 +81,16 @@ function Set-NCRestConfig {
     $instance.MaxRetries = $MaxRetries
     $instance.ThrottleMs = $ThrottleMs
 
+    # Dispose prior instance so its SecureString tokens are zeroed before we
+    # drop the reference — important when reconfiguring (tenant switch, reauth).
+    $prior = $script:NCRestApiInstance
+    if (-not $prior) { $prior = $global:NCRestApiInstance }
+    if ($prior -and $prior -ne $instance) {
+        try { $prior.Dispose() } catch { Write-Verbose "[NCRESTCONFIG] prior Dispose() threw: $($_.Exception.Message)" }
+    }
+
+    # Module scope is the source of truth; global mirror lets scripts dot-sourced
+    # outside the module (no module session state) still pick up the instance.
     $script:NCRestApiInstance = $instance
     $global:NCRestApiInstance = $instance
 }

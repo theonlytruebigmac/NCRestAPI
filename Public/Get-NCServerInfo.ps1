@@ -33,6 +33,8 @@ function Get-NCServerInfo {
         [Parameter(ParameterSetName = 'Extra')][switch]$Extra,
         [Parameter(ParameterSetName = 'Extra')][pscredential]$Credential
     )
+
+    Write-Verbose "[FUNCTION] Get-NCServerInfo: invoked."
     $api = Get-NCRestApiInstance
 
     switch ($PSCmdlet.ParameterSetName) {

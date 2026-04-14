@@ -25,7 +25,7 @@ The function returns the default device property data from the N-central API.
 
 .NOTES
 Author: Zach Frazier
-Website: https://github.com/soybigmac/NCRestAPI
+Website: https://github.com/theonlytruebigmac/NCRestAPI
 #>
 
 function Get-NCDefaultDeviceProperty {
@@ -46,7 +46,7 @@ function Get-NCDefaultDeviceProperty {
 
 
     process {
-    Write-Verbose "[FUNCTION] Running Get-NCDefaultDeviceProperty."
+    Write-Verbose "[FUNCTION] Get-NCDefaultDeviceProperty: invoked."
     $endpoint = "api/org-units/$orgUnitId/custom-properties/device-custom-property-defaults/$propertyId"
 
         Write-Verbose "[FUNCTION] Retrieving default device property with endpoint: $endpoint."

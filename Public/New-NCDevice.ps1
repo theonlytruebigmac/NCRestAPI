@@ -56,6 +56,7 @@ function New-NCDevice {
     )
     begin { $api = Get-NCRestApiInstance }
     process {
+        Write-Verbose "[FUNCTION] New-NCDevice: invoked."
         $body = @{
             customerId     = $CustomerId
             deviceClass    = $DeviceClass
