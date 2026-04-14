@@ -140,7 +140,7 @@ CI runs on Ubuntu, Windows, and macOS under `.github/workflows/ci.yml`.
 
 ## Contributing
 
-Issues and PRs welcome at [github.com/soybigmac/NCRestAPI](https://github.com/soybigmac/NCRestAPI).
+Issues and PRs welcome at [github.com/theonlytruebigmac/NCRestAPI](https://github.com/theonlytruebigmac/NCRestAPI).
 
 ## License
 
