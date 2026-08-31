@@ -315,3 +315,9 @@ Describe 'Remove-NCDevice ShouldProcess' {
         $script:NCRestApiInstance.Deleted[0] | Should -Be 'api/devices/xyz?removeAgents=true'
     }
 }
+
+Describe 'Get-NCScheduledTasks parameter enforcement' {
+    It 'requires -TaskId (no bulk endpoint)' {
+        { Get-NCScheduledTasks -TaskId '' -ErrorAction Stop } | Should -Throw
+    }
+}
