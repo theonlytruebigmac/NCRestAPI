@@ -7,62 +7,62 @@ The `New-NCCustomer` function creates a new customer in the N-central API.
 It requires several mandatory parameters to specify the service organization ID, customer name, and contact details. 
 Optional parameters include license type, external ID, phone, and address details.
 
-.PARAMETER soId
+.PARAMETER SoId
 The service organization ID under which the customer will be created. This parameter is mandatory.
 
-.PARAMETER customerName
+.PARAMETER CustomerName
 The name of the customer. This parameter is mandatory.
 
-.PARAMETER contactFirstName
+.PARAMETER ContactFirstName
 The first name of the contact person for the customer. This parameter is mandatory.
 
-.PARAMETER contactLastName
+.PARAMETER ContactLastName
 The last name of the contact person for the customer. This parameter is mandatory.
 
-.PARAMETER licenseType
+.PARAMETER LicenseType
 The license type for the customer.
 
-.PARAMETER externalId
+.PARAMETER ExternalId
 An external ID for the customer.
 
-.PARAMETER phone
+.PARAMETER Phone
 The phone number for the customer.
 
-.PARAMETER contactTitle
+.PARAMETER ContactTitle
 The title of the contact person for the customer.
 
-.PARAMETER contactEmail
+.PARAMETER ContactEmail
 The email address of the contact person for the customer.
 
-.PARAMETER contactPhone
+.PARAMETER ContactPhone
 The phone number of the contact person for the customer.
 
-.PARAMETER contactPhoneExt
+.PARAMETER ContactPhoneExt
 The phone extension of the contact person for the customer.
 
-.PARAMETER contactDepartment
+.PARAMETER ContactDepartment
 The department of the contact person for the customer.
 
-.PARAMETER street1
+.PARAMETER Street1
 The primary street address of the customer.
 
-.PARAMETER street2
+.PARAMETER Street2
 The secondary street address of the customer.
 
-.PARAMETER city
+.PARAMETER City
 The city of the customer.
 
-.PARAMETER stateProv
+.PARAMETER StateProv
 The state or province of the customer.
 
-.PARAMETER country
+.PARAMETER Country
 The country of the customer.
 
-.PARAMETER postalCode
+.PARAMETER PostalCode
 The postal code of the customer.
 
 .EXAMPLE
-PS C:\> New-NCCustomer -soId 123 -customerName "Acme Corp" -contactFirstName "John" -contactLastName "Doe" -Verbose
+PS C:\> New-NCCustomer -SoId 123 -CustomerName "Acme Corp" -ContactFirstName "John" -ContactLastName "Doe" -Verbose
 Creates a new customer named "Acme Corp" under the service organization ID 123 with contact details for John Doe, with verbose output enabled.
 
 .INPUTS
@@ -111,30 +111,29 @@ function New-NCCustomer {
     begin { $api = Get-NCRestApiInstance }
 
     process {
-
         Write-Verbose "[FUNCTION] New-NCCustomer: invoked."
         $body = [ordered]@{
-            customerName     = $customerName
-            contactFirstName = $contactFirstName
-            contactLastName  = $contactLastName
+            customerName     = $CustomerName
+            contactFirstName = $ContactFirstName
+            contactLastName  = $ContactLastName
         }
 
-        if ($licenseType)       { $body.licenseType       = $licenseType }
-        if ($externalId)        { $body.externalId        = $externalId }
-        if ($phone)             { $body.phone             = $phone }
-        if ($contactTitle)      { $body.contactTitle      = $contactTitle }
-        if ($contactEmail)      { $body.contactEmail      = $contactEmail }
-        if ($contactPhone)      { $body.contactPhone      = $contactPhone }
-        if ($contactPhoneExt)   { $body.contactPhoneExt   = $contactPhoneExt }
-        if ($contactDepartment) { $body.contactDepartment = $contactDepartment }
-        if ($street1)           { $body.street1           = $street1 }
-        if ($street2)           { $body.street2           = $street2 }
-        if ($city)              { $body.city              = $city }
-        if ($stateProv)         { $body.stateProv         = $stateProv }
-        if ($country)           { $body.country           = $country }
-        if ($postalCode)        { $body.postalCode        = $postalCode }
+        if ($LicenseType)       { $body.licenseType       = $LicenseType }
+        if ($ExternalId)        { $body.externalId        = $ExternalId }
+        if ($Phone)             { $body.phone             = $Phone }
+        if ($ContactTitle)      { $body.contactTitle      = $ContactTitle }
+        if ($ContactEmail)      { $body.contactEmail      = $ContactEmail }
+        if ($ContactPhone)      { $body.contactPhone      = $ContactPhone }
+        if ($ContactPhoneExt)   { $body.contactPhoneExt   = $ContactPhoneExt }
+        if ($ContactDepartment) { $body.contactDepartment = $ContactDepartment }
+        if ($Street1)           { $body.street1           = $Street1 }
+        if ($Street2)           { $body.street2           = $Street2 }
+        if ($City)              { $body.city              = $City }
+        if ($StateProv)         { $body.stateProv         = $StateProv }
+        if ($Country)           { $body.country           = $Country }
+        if ($PostalCode)        { $body.postalCode        = $PostalCode }
 
-        if (-not $PSCmdlet.ShouldProcess($customerName, 'Create customer')) { return }
-        $api.Post("api/service-orgs/$soId/customers", $body)
+        if (-not $PSCmdlet.ShouldProcess($CustomerName, 'Create customer')) { return }
+        $api.Post("api/service-orgs/$SoId/customers", $body)
     }
 }

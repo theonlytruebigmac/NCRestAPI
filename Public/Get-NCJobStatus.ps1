@@ -36,16 +36,8 @@ function Get-NCJobStatus {
 
     begin { $api = Get-NCRestApiInstance }
 
-
-
     process {
-    Write-Verbose "[FUNCTION] Get-NCJobStatus: invoked."
-    $endpoint = "api/org-units/$orgUnitId/job-statuses"
-
-        Write-Verbose "[FUNCTION] Retrieving job status with endpoint: $endpoint."
-        $data = $api.Get($endpoint)
-        return $data
-
-
+        Write-Verbose "[FUNCTION] Get-NCJobStatus: api/org-units/$OrgUnitId/job-statuses"
+        $api.Get("api/org-units/$OrgUnitId/job-statuses")
     }
 }

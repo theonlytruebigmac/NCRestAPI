@@ -113,34 +113,31 @@ function New-NCServiceOrg {
         [string]$PostalCode
     )
 
-    $api = Get-NCRestApiInstance
+    begin { $api = Get-NCRestApiInstance }
 
-    Write-Verbose "[FUNCTION] New-NCServiceOrg: invoked."
-    $body = [ordered]@{
-        soName           = $SoName
-        contactFirstName = $ContactFirstName
-        contactLastName  = $ContactLastName
+    process {
+        Write-Verbose "[FUNCTION] New-NCServiceOrg: invoked."
+        $body = [ordered]@{
+            soName           = $SoName
+            contactFirstName = $ContactFirstName
+            contactLastName  = $ContactLastName
+        }
+
+        if ($ExternalId) { $body.externalId = $ExternalId }
+        if ($Phone) { $body.phone = $Phone }
+        if ($ContactTitle) { $body.contactTitle = $ContactTitle }
+        if ($ContactEmail) { $body.contactEmail = $ContactEmail }
+        if ($ContactPhone) { $body.contactPhone = $ContactPhone }
+        if ($ContactPhoneExt) { $body.contactPhoneExt = $ContactPhoneExt }
+        if ($ContactDepartment) { $body.contactDepartment = $ContactDepartment }
+        if ($Street1) { $body.street1 = $Street1 }
+        if ($Street2) { $body.street2 = $Street2 }
+        if ($City) { $body.city = $City }
+        if ($StateProv) { $body.stateProv = $StateProv }
+        if ($Country) { $body.country = $Country }
+        if ($PostalCode) { $body.postalCode = $PostalCode }
+
+        if (-not $PSCmdlet.ShouldProcess($SoName, 'Create service organization')) { return }
+        $api.Post('api/service-orgs', $body)
     }
-
-    if ($ExternalId) { $body["externalId"] = $ExternalId }
-    if ($Phone) { $body["phone"] = $Phone }
-    if ($ContactTitle) { $body["contactTitle"] = $ContactTitle }
-    if ($ContactEmail) { $body["contactEmail"] = $ContactEmail }
-    if ($ContactPhone) { $body["contactPhone"] = $ContactPhone }
-    if ($ContactPhoneExt) { $body["contactPhoneExt"] = $ContactPhoneExt }
-    if ($ContactDepartment) { $body["contactDepartment"] = $ContactDepartment }
-    if ($Street1) { $body["street1"] = $Street1 }
-    if ($Street2) { $body["street2"] = $Street2 }
-    if ($City) { $body["city"] = $City }
-    if ($StateProv) { $body["stateProv"] = $StateProv }
-    if ($Country) { $body["country"] = $Country }
-    if ($PostalCode) { $body["postalCode"] = $PostalCode }
-
-    $endpoint = "api/service-orgs"
-
-        Write-Verbose "[FUNCTION] Creating new service organization with endpoint: $endpoint."
-        if (-not $PSCmdlet.ShouldProcess($soName, 'Create service organization')) { return }
-
-        $response = $api.Post($endpoint, $body)
-        return $response
 }
