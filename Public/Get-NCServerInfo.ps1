@@ -3,11 +3,12 @@
 Retrieves N-central API service metadata.
 
 .DESCRIPTION
-Covers four of the `/api` metadata endpoints:
+Covers five of the `/api` metadata endpoints:
 
   - default  -> GET /api              - link list of top-level endpoints
   - -Version -> GET /api/server-info  - running API-Service version
   - -Health  -> GET /api/health       - health status
+  - -Time    -> GET /api/server-info/time - server time
   - -Extra   -> GET /api/server-info/extra - extra version info (public)
 
 Supply `-Credential` together with `-Extra` to use the authenticated variant at
@@ -30,6 +31,7 @@ function Get-NCServerInfo {
     param (
         [Parameter(ParameterSetName = 'Health')][switch]$Health,
         [Parameter(ParameterSetName = 'Version')][switch]$Version,
+        [Parameter(ParameterSetName = 'Time')][switch]$Time,
         [Parameter(ParameterSetName = 'Extra')][switch]$Extra,
         [Parameter(ParameterSetName = 'Extra')][pscredential]$Credential
     )
@@ -40,6 +42,7 @@ function Get-NCServerInfo {
     switch ($PSCmdlet.ParameterSetName) {
         'Health'  { return $api.Get('api/health') }
         'Version' { return $api.Get('api/server-info') }
+        'Time'    { return $api.Get('api/server-info/time') }
         'Extra'   {
             if ($Credential) {
                 $body = @{
