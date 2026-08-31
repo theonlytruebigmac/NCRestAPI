@@ -12,7 +12,7 @@ Org unit to create the user in.
 User email address (required).
 
 .PARAMETER Password
-User password (required). Accepts [securestring] or [string].
+User password (required). Must be a [securestring].
 
 .PARAMETER FirstName
 User first name (required).
@@ -20,7 +20,7 @@ User first name (required).
 .PARAMETER LastName
 User last name (required).
 
-.PARAMETER Username
+.PARAMETER UserName
 Optional username (defaults to email if omitted by the API).
 
 .PARAMETER Country
@@ -71,6 +71,7 @@ New-NCUser -OrgUnitId 1 -Email 'user@example.com' -Password (Read-Host -AsSecure
 #>
 function New-NCUser {
     [CmdletBinding(SupportsShouldProcess)]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingUsernameAndPasswordParams', '', Justification = 'UserName is an optional display name, not a login credential paired with Password.')]
     param (
         [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
@@ -81,7 +82,7 @@ function New-NCUser {
         [string]$Email,
 
         [Parameter(Mandatory)]
-        [object]$Password,
+        [securestring]$Password,
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -91,7 +92,7 @@ function New-NCUser {
         [ValidateNotNullOrEmpty()]
         [string]$LastName,
 
-        [string]$Username,
+        [string]$UserName,
         [string]$Country,
         [string]$PostalCode,
         [string]$Street1,
@@ -113,11 +114,9 @@ function New-NCUser {
     process {
         Write-Verbose "[FUNCTION] New-NCUser: POST api/org-units/$OrgUnitId/users"
 
-        $plainPassword = if ($Password -is [securestring]) {
-            $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
-            try { [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr) }
-            finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr) }
-        } else { [string]$Password }
+        $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
+        try { $plainPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr) }
+        finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr) }
 
         $body = [ordered]@{
             email     = $Email
@@ -126,7 +125,7 @@ function New-NCUser {
             lastName  = $LastName
         }
 
-        if ($Username)          { $body.username          = $Username }
+        if ($UserName)          { $body.username          = $UserName }
         if ($Country)           { $body.country           = $Country }
         if ($PostalCode)        { $body.postalCode        = $PostalCode }
         if ($Street1)           { $body.street1           = $Street1 }
