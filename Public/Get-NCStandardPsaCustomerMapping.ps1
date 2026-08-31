@@ -3,7 +3,7 @@
 Retrieves standard-PSA customer mappings for a given customer.
 
 .DESCRIPTION
-GET /api/standard-psa/customer-mapping/{customerId}.
+GET /api/standard-psa/customer/{customerId}/mappings.
 
 .EXAMPLE
 Get-NCStandardPsaCustomerMapping -CustomerId 100
@@ -18,7 +18,7 @@ function Get-NCStandardPsaCustomerMapping {
     )
     begin { $api = Get-NCRestApiInstance }
     process {
-        Write-Verbose "[FUNCTION] Get-NCStandardPsaCustomerMapping: invoked."
-        $api.Get("api/standard-psa/customer-mapping/$CustomerId")
+        Write-Verbose "[FUNCTION] Get-NCStandardPsaCustomerMapping: api/standard-psa/customer/$CustomerId/mappings"
+        $api.Get("api/standard-psa/customer/$CustomerId/mappings")
     }
 }

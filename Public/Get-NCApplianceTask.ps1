@@ -5,11 +5,11 @@ Retrieves the appliance-task information for a given task ID from the N-central 
 .DESCRIPTION
 The `Get-NCApplianceTask` function retrieves the appliance-task information for a specified task ID from the N-central API.
 
-.PARAMETER taskId
+.PARAMETER TaskId
 Specifies the task ID for which to fetch the appliance-task information. This parameter is mandatory.
 
 .EXAMPLE
-PS C:\> Get-NCApplianceTask -taskId "abc123" -Verbose
+PS C:\> Get-NCApplianceTask -TaskId "abc123" -Verbose
 Retrieves the appliance-task information for the task with ID "abc123" and enables verbose output.
 
 .INPUTS

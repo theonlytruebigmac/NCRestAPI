@@ -7,62 +7,62 @@ The `New-NCSite` function creates a new site for a customer in the N-central API
 It requires several mandatory parameters to specify the customer ID, site name, and contact details.
 Optional parameters include license type, external ID, phone, and address details.
 
-.PARAMETER customerId
+.PARAMETER CustomerId
 The customer ID under which the site will be created. This parameter is mandatory.
 
-.PARAMETER siteName
+.PARAMETER SiteName
 The name of the site. This parameter is mandatory.
 
-.PARAMETER contactFirstName
+.PARAMETER ContactFirstName
 The first name of the contact person for the site. This parameter is mandatory.
 
-.PARAMETER contactLastName
+.PARAMETER ContactLastName
 The last name of the contact person for the site. This parameter is mandatory.
 
-.PARAMETER licenseType
+.PARAMETER LicenseType
 The license type for the site.
 
-.PARAMETER externalId
+.PARAMETER ExternalId
 An external ID for the site.
 
-.PARAMETER phone
+.PARAMETER Phone
 The phone number for the site.
 
-.PARAMETER contactTitle
+.PARAMETER ContactTitle
 The title of the contact person for the site.
 
-.PARAMETER contactEmail
+.PARAMETER ContactEmail
 The email address of the contact person for the site.
 
-.PARAMETER contactPhone
+.PARAMETER ContactPhone
 The phone number of the contact person for the site.
 
-.PARAMETER contactPhoneExt
+.PARAMETER ContactPhoneExt
 The phone extension of the contact person for the site.
 
-.PARAMETER contactDepartment
+.PARAMETER ContactDepartment
 The department of the contact person for the site.
 
-.PARAMETER street1
+.PARAMETER Street1
 The primary street address of the site.
 
-.PARAMETER street2
+.PARAMETER Street2
 The secondary street address of the site.
 
-.PARAMETER city
+.PARAMETER City
 The city of the site.
 
-.PARAMETER stateProv
+.PARAMETER StateProv
 The state or province of the site.
 
-.PARAMETER country
+.PARAMETER Country
 The country of the site.
 
-.PARAMETER postalCode
+.PARAMETER PostalCode
 The postal code of the site.
 
 .EXAMPLE
-PS C:\> New-NCSite -customerId 123 -siteName "Main Office" -contactFirstName "John" -contactLastName "Doe" -Verbose
+PS C:\> New-NCSite -CustomerId 123 -SiteName "Main Office" -ContactFirstName "John" -ContactLastName "Doe" -Verbose
 Creates a new site named "Main Office" under the customer ID 123 with contact details for John Doe, with verbose output enabled.
 
 .INPUTS
@@ -108,35 +108,32 @@ function New-NCSite {
         [string]$PostalCode
     )
 
-    $api = Get-NCRestApiInstance
+    begin { $api = Get-NCRestApiInstance }
 
-    Write-Verbose "[FUNCTION] New-NCSite: invoked."
-    $body = [ordered]@{
-        siteName         = $siteName
-        contactFirstName = $contactFirstName
-        contactLastName  = $contactLastName
+    process {
+        Write-Verbose "[FUNCTION] New-NCSite: invoked."
+        $body = [ordered]@{
+            siteName         = $SiteName
+            contactFirstName = $ContactFirstName
+            contactLastName  = $ContactLastName
+        }
+
+        if ($LicenseType) { $body.licenseType = $LicenseType }
+        if ($ExternalId) { $body.externalId = $ExternalId }
+        if ($Phone) { $body.phone = $Phone }
+        if ($ContactTitle) { $body.contactTitle = $ContactTitle }
+        if ($ContactEmail) { $body.contactEmail = $ContactEmail }
+        if ($ContactPhone) { $body.contactPhone = $ContactPhone }
+        if ($ContactPhoneExt) { $body.contactPhoneExt = $ContactPhoneExt }
+        if ($ContactDepartment) { $body.contactDepartment = $ContactDepartment }
+        if ($Street1) { $body.street1 = $Street1 }
+        if ($Street2) { $body.street2 = $Street2 }
+        if ($City) { $body.city = $City }
+        if ($StateProv) { $body.stateProv = $StateProv }
+        if ($Country) { $body.country = $Country }
+        if ($PostalCode) { $body.postalCode = $PostalCode }
+
+        if (-not $PSCmdlet.ShouldProcess($SiteName, 'Create site')) { return }
+        $api.Post("api/customers/$CustomerId/sites", $body)
     }
-
-    if ($licenseType) { $body["licenseType"] = $licenseType }
-    if ($externalId) { $body["externalId"] = $externalId }
-    if ($phone) { $body["phone"] = $phone }
-    if ($contactTitle) { $body["contactTitle"] = $contactTitle }
-    if ($contactEmail) { $body["contactEmail"] = $contactEmail }
-    if ($contactPhone) { $body["contactPhone"] = $contactPhone }
-    if ($contactPhoneExt) { $body["contactPhoneExt"] = $contactPhoneExt }
-    if ($contactDepartment) { $body["contactDepartment"] = $contactDepartment }
-    if ($street1) { $body["street1"] = $street1 }
-    if ($street2) { $body["street2"] = $street2 }
-    if ($city) { $body["city"] = $city }
-    if ($stateProv) { $body["stateProv"] = $stateProv }
-    if ($country) { $body["country"] = $country }
-    if ($postalCode) { $body["postalCode"] = $postalCode }
-
-    $endpoint = "api/customers/$customerId/sites"
-
-        Write-Verbose "[FUNCTION] Creating new site with endpoint: $endpoint."
-        if (-not $PSCmdlet.ShouldProcess($siteName, 'Create site')) { return }
-
-        $response = $api.Post($endpoint, $body)
-        return $response
 }

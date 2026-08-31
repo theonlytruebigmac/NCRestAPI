@@ -1,9 +1,8 @@
 #Requires -Module @{ ModuleName = 'Pester'; ModuleVersion = '5.0.0' }
 
 <#
-Asserts that every endpoint the module calls still exists in the bundled OpenAPI spec
-at Tests/fixtures/openapi-spec.json. If N-central drops or renames an endpoint, the
-fixture refresh job will fail and this test will then flag which wrapper is stale.
+Asserts that every endpoint the module calls still exists in the bundled OpenAPI spec.
+Prefers the root spec.json as the source of truth; falls back to the fixture spec when spec.json is absent.
 
 The intent is to catch drift, not to enforce coverage: it is fine for the spec to have
 endpoints the module doesn't wrap yet.
@@ -13,7 +12,10 @@ endpoints the module doesn't wrap yet.
 # the full spec path list, then compare.
 
 $ModuleRoot = Split-Path -Parent $PSScriptRoot
-$specPath = Join-Path $PSScriptRoot 'fixtures/openapi-spec.json'
+$specPath = Join-Path $ModuleRoot 'spec.json'
+if (-not (Test-Path $specPath)) {
+    $specPath = Join-Path $PSScriptRoot 'fixtures/openapi-spec.json'
+}
 $spec = Get-Content $specPath -Raw | ConvertFrom-Json
 $specPaths = @($spec.paths.PSObject.Properties.Name)
 $specNormalized = $specPaths | ForEach-Object { ($_ -replace '\{[^}]+\}', '{id}') } | Sort-Object -Unique

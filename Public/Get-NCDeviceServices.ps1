@@ -6,11 +6,11 @@ Retrieves service monitor status for a device from the N-central API.
 The `Get-NCDeviceServices` function retrieves the service monitor status for a device from the N-central API.
 It requires a device ID to specify the device whose service monitor status is to be retrieved.
 
-.PARAMETER deviceId
+.PARAMETER DeviceId
 The device ID for which to retrieve service monitor status. This parameter is mandatory.
 
 .EXAMPLE
-PS C:\> Get-NCDeviceServices -deviceId 12345 -Verbose
+PS C:\> Get-NCDeviceServices -DeviceId 12345 -Verbose
 Retrieves the service monitor status for the device with the ID 12345 with verbose output enabled.
 
 .INPUTS
@@ -36,16 +36,8 @@ function Get-NCDeviceServices {
 
     begin { $api = Get-NCRestApiInstance }
 
-
-
     process {
-    Write-Verbose "[FUNCTION] Get-NCDeviceServices: invoked."
-    $endpoint = "api/devices/$DeviceId/service-monitor-status"
-
-        Write-Verbose "[FUNCTION] Retrieving device services for endpoint: $endpoint."
-        $data = $api.Get($endpoint)
-        return $data
-
-
+        Write-Verbose "[FUNCTION] Get-NCDeviceServices: api/devices/$DeviceId/service-monitor-status"
+        $api.Get("api/devices/$DeviceId/service-monitor-status")
     }
 }

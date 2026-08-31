@@ -36,16 +36,8 @@ function Get-NCDeviceAssets {
 
     begin { $api = Get-NCRestApiInstance }
 
-
-
     process {
-    Write-Verbose "[FUNCTION] Get-NCDeviceAssets: invoked."
-    $endpoint = "api/devices/$DeviceId/assets"
-
-        Write-Verbose "[FUNCTION] Retrieving device assets with endpoint: $endpoint."
-        $data = $api.Get($endpoint)
-        return $data
-
-
+        Write-Verbose "[FUNCTION] Get-NCDeviceAssets: api/devices/$DeviceId/assets"
+        $api.Get("api/devices/$DeviceId/assets")
     }
 }

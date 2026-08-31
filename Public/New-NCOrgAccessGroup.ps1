@@ -73,10 +73,10 @@ function New-NCOrgAccessGroup {
     $body = [ordered]@{
         groupName              = $GroupName
         groupDescription       = $GroupDescription
-        orgUnitIds             = $OrgUnitIds
-        userIds                = $UserIds
         autoIncludeNewOrgUnits = [bool]$AutoIncludeNewOrgUnits
     }
+if ($null -ne $OrgUnitIds) { $body.orgUnitIds = $OrgUnitIds }
+if ($null -ne $UserIds)    { $body.userIds    = $UserIds }
 
     $endpoint = "api/org-units/$OrgUnitId/access-groups"
 

@@ -5,26 +5,26 @@ Retrieves the status of a given task using the task ID or retrieves detailed sta
 .DESCRIPTION
 The `Get-NCScheduledTaskStatus` function retrieves the status of the given task from the N-central API based on the provided task ID. If the `-details` switch is specified, it retrieves detailed statuses for each device associated with the task instead.
 
-.PARAMETER taskId
+.PARAMETER TaskId
 Specifies the ID of the task for which status needs to be fetched.
 
-.PARAMETER details
+.PARAMETER Details
 If specified, retrieves detailed statuses per device for the given task.
 
 .EXAMPLE
-PS C:\> Get-NCScheduledTaskStatus -taskId "12345"
+PS C:\> Get-NCScheduledTaskStatus -TaskId "12345"
 Retrieves the aggregated status for the task with ID 12345.
 
 .EXAMPLE
-PS C:\> Get-NCScheduledTaskStatus -taskId "12345" -details
+PS C:\> Get-NCScheduledTaskStatus -TaskId "12345" -Details
 Retrieves the detailed status for the task with ID 12345.
 
 .EXAMPLE
-PS C:\> Get-NCScheduledTaskStatus -taskId "12345" -Verbose
+PS C:\> Get-NCScheduledTaskStatus -TaskId "12345" -Verbose
 Retrieves the aggregated status for the task with ID 12345 with verbose output enabled.
 
 .EXAMPLE
-PS C:\> Get-NCScheduledTaskStatus -taskId "12345" -details -Verbose
+PS C:\> Get-NCScheduledTaskStatus -TaskId "12345" -Details -Verbose
 Retrieves the detailed status for the task with ID 12345 with verbose output enabled.
 
 .INPUTS

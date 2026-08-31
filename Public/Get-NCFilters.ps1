@@ -33,23 +33,24 @@ function Get-NCFilters {
         [string]$SortOrder = 'asc'
     )
 
-    $api = Get-NCRestApiInstance
-    $endpoint = 'api/device-filters'
+    begin { $api = Get-NCRestApiInstance }
 
-    $queryParameters = @{}
-    if ($ViewScope -and $ViewScope -ne 'ALL')   { $queryParameters['viewScope'] = $ViewScope }
-    Add-NCCommonQuery -Parameters $queryParameters -Select $Select -SortBy $SortBy -SortOrder $SortOrder
+    process {
+        $endpoint = 'api/device-filters'
 
-    if ($All) {
-        return Invoke-NCPagedRequest -Endpoint $endpoint -QueryParameters $queryParameters
+        $queryParameters = @{}
+        if ($ViewScope -and $ViewScope -ne 'ALL')   { $queryParameters['viewScope'] = $ViewScope }
+        Add-NCCommonQuery -Parameters $queryParameters -Select $Select -SortBy $SortBy -SortOrder $SortOrder
+
+        if ($All) {
+            return Invoke-NCPagedRequest -Endpoint $endpoint -QueryParameters $queryParameters
+        }
+
+        if ($PageNumber) { $queryParameters['pageNumber'] = $PageNumber }
+        if ($PageSize)   { $queryParameters['pageSize']   = $PageSize } else { $queryParameters['pageSize'] = 500 }
+
+        $endpoint += ConvertTo-NCQueryString -Parameters $queryParameters
+        Write-Verbose "[FUNCTION] Get-NCFilters: $endpoint"
+        $api.Get($endpoint)
     }
-
-    if ($PageNumber) { $queryParameters['pageNumber'] = $PageNumber }
-
-
-    if ($PageSize)   { $queryParameters['pageSize']   = $PageSize } else { $queryParameters['pageSize'] = 500 }
-
-    $endpoint += ConvertTo-NCQueryString -Parameters $queryParameters
-    Write-Verbose "[FUNCTION] Get-NCFilters: $endpoint"
-    $api.Get($endpoint)
 }

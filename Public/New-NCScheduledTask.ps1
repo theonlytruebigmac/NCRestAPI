@@ -5,19 +5,19 @@ Creates a direct-support scheduled task against a specific device in the N-centr
 .DESCRIPTION
 The `New-NCScheduledTask` function creates a direct-support scheduled task against a specific device. The task will be executed immediately against the device specified in the request payload.
 
-.PARAMETER name
+.PARAMETER Name
 Specifies the name of the task. This value must be unique.
 
-.PARAMETER itemId
+.PARAMETER ItemId
 Specifies the ID of the remote execution item.
 
-.PARAMETER taskType
+.PARAMETER TaskType
 Specifies the type of the task. Supported values are: AutomationPolicy, Script, or MacScript.
 
-.PARAMETER customerId
+.PARAMETER CustomerId
 Specifies the ID of the customer.
 
-.PARAMETER deviceId
+.PARAMETER DeviceId
 Specifies the ID of the device.
 
 .PARAMETER CredentialType

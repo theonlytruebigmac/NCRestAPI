@@ -43,16 +43,8 @@ function Get-NCDefaultDeviceProperty {
 
     begin { $api = Get-NCRestApiInstance }
 
-
-
     process {
-    Write-Verbose "[FUNCTION] Get-NCDefaultDeviceProperty: invoked."
-    $endpoint = "api/org-units/$orgUnitId/custom-properties/device-custom-property-defaults/$propertyId"
-
-        Write-Verbose "[FUNCTION] Retrieving default device property with endpoint: $endpoint."
-        $response = $api.Get($endpoint)
-        return $response
-
-
+        Write-Verbose "[FUNCTION] Get-NCDefaultDeviceProperty: api/org-units/$OrgUnitId/custom-properties/device-custom-property-defaults/$PropertyId"
+        $api.Get("api/org-units/$OrgUnitId/custom-properties/device-custom-property-defaults/$PropertyId")
     }
 }
