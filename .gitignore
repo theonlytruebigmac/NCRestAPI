@@ -41,3 +41,4 @@ yarn.lock
 *.so
 
 NCRestAPI.code-workspace
+docs
