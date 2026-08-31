@@ -1,6 +1,33 @@
 # Changelog
 
-## 1.7.1
+## 1.8.1
+
+### Fixed
+
+- `Get-NCScheduledTasks`: removed dead `-All`/`-PageNumber`/`-PageSize`/`-SortBy`/`-SortOrder`
+  parameters that always threw before being used. `-TaskId` is now mandatory.
+- `New-NCOrgAccessGroup` / `New-NCDeviceAccessGroup`: optional `orgUnitIds`/`deviceIds`/`userIds`
+  arrays are no longer sent as `null` when omitted.
+- `Get-NCStandardPsaCustomerMapping`: migrated from deprecated
+  `/api/standard-psa/customer-mapping/{id}` to `/api/standard-psa/customer/{id}/mappings`.
+- `Get-NCFilters`, `New-NCServiceOrg`, `New-NCSite`: added `begin`/`process` blocks
+  for consistency and correct API instance lifecycle.
+
+### Changed
+
+- Standardized PascalCase variable references in body construction and
+  `ShouldProcess` calls across `New-NCCustomer`, `New-NCSite`, `New-NCServiceOrg`,
+  `Get-NCJobStatus`, `Get-NCDefaultDeviceProperty`.
+- Fixed `.PARAMETER` casing in comment-based help to match parameter declarations
+  in `Get-NCDeviceServices`, `Get-NCApplianceTask`, `Get-NCScheduledTaskStatus`,
+  `New-NCSite`, `New-NCCustomer`, `New-NCScheduledTask`.
+- Cleaned up indentation and removed extra blank lines in `Get-NCJobStatus`,
+  `Get-NCDefaultDeviceProperty`, `Get-NCDeviceAssets`, `Get-NCDeviceServices`.
+- `SpecDrift.Tests.ps1` now reads root `spec.json` instead of
+  `Tests/fixtures/openapi-spec.json`.
+- Added test asserting `Get-NCScheduledTasks` requires `-TaskId`.
+
+## 1.8.0
 
 ### Fixed (surfaced by a full cmdlet matrix run against demo server)
 
