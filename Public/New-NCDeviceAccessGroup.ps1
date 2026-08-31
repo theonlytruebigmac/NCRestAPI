@@ -69,8 +69,8 @@ function New-NCDeviceAccessGroup {
         groupName        = $GroupName
         groupDescription = $GroupDescription
     }
-    if ($DeviceIds) { $body.deviceIds = $DeviceIds }
-    if ($UserIds)   { $body.userIds   = $UserIds }
+if ($null -ne $DeviceIds) { $body.deviceIds = $DeviceIds }
+if ($null -ne $UserIds)   { $body.userIds   = $UserIds }
 
     $endpoint = "api/org-units/$OrgUnitId/device-access-groups"
 
