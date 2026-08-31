@@ -2,7 +2,7 @@
 
 <#
 Asserts that every endpoint the module calls still exists in the bundled OpenAPI spec.
-Uses the root spec.json as the single source of truth.
+Prefers the root spec.json as the source of truth; falls back to the fixture spec when spec.json is absent.
 
 The intent is to catch drift, not to enforce coverage: it is fine for the spec to have
 endpoints the module doesn't wrap yet.
