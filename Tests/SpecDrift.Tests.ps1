@@ -13,6 +13,9 @@ endpoints the module doesn't wrap yet.
 
 $ModuleRoot = Split-Path -Parent $PSScriptRoot
 $specPath = Join-Path $ModuleRoot 'spec.json'
+if (-not (Test-Path $specPath)) {
+    $specPath = Join-Path $PSScriptRoot 'fixtures/openapi-spec.json'
+}
 $spec = Get-Content $specPath -Raw | ConvertFrom-Json
 $specPaths = @($spec.paths.PSObject.Properties.Name)
 $specNormalized = $specPaths | ForEach-Object { ($_ -replace '\{[^}]+\}', '{id}') } | Sort-Object -Unique
