@@ -75,8 +75,8 @@ function New-NCOrgAccessGroup {
         groupDescription       = $GroupDescription
         autoIncludeNewOrgUnits = [bool]$AutoIncludeNewOrgUnits
     }
-    if ($OrgUnitIds) { $body.orgUnitIds = $OrgUnitIds }
-    if ($UserIds)    { $body.userIds    = $UserIds }
+if ($null -ne $OrgUnitIds) { $body.orgUnitIds = $OrgUnitIds }
+if ($null -ne $UserIds)    { $body.userIds    = $UserIds }
 
     $endpoint = "api/org-units/$OrgUnitId/access-groups"
 
