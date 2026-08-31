@@ -318,6 +318,8 @@ Describe 'Remove-NCDevice ShouldProcess' {
 
 Describe 'Get-NCScheduledTasks parameter enforcement' {
     It 'requires -TaskId (no bulk endpoint)' {
-        { Get-NCScheduledTasks -TaskId '' -ErrorAction Stop } | Should -Throw
+        $cmd = Get-Command Get-NCScheduledTasks
+        $paramAttr = $cmd.Parameters['TaskId'].Attributes | Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] } | Select-Object -First 1
+        $paramAttr.Mandatory | Should -BeTrue
     }
 }
