@@ -26,6 +26,7 @@ class NCRestAPI {
     # big -All pulls or pipeline fan-out against rate-limited tenants.
     [int]$ThrottleMs = 0
     [bool]$Verbose
+    hidden [bool]$UseSso = $false
     hidden [bool]$InPager = $false
     hidden [datetime]$LastRequestAt = [datetime]::MinValue
 
@@ -36,6 +37,16 @@ class NCRestAPI {
         $this.RefreshTokenExpiration = $refreshTokenExpiration
         $this.Verbose = $verbose
         $this.Authenticate()
+    }
+
+    NCRestAPI([string]$baseUrl, [securestring]$ssoToken, [string]$accessTokenExpiration, [string]$refreshTokenExpiration, [bool]$verbose, [bool]$useSso) {
+        $this.BaseUrl = $baseUrl
+        $this.ApiToken = $ssoToken
+        $this.AccessTokenExpiration = $accessTokenExpiration
+        $this.RefreshTokenExpiration = $refreshTokenExpiration
+        $this.Verbose = $verbose
+        $this.UseSso = $useSso
+        if ($useSso) { $this.AuthenticateSso() } else { $this.Authenticate() }
     }
 
     static [securestring] ToSecureString([string]$plain) {
@@ -93,6 +104,30 @@ class NCRestAPI {
         $this.Log("[NCRESTAPI] Authenticate: succeeded.")
     }
 
+    [void] AuthenticateSso() {
+        $this.Log("[NCRESTAPI] AuthenticateSso: starting.")
+        $url = "$($this.BaseUrl)/api/auth/sso"
+        $headers = @{
+            'Accept'        = '*/*'
+            'Authorization' = "Bearer $($this.Reveal($this.ApiToken))"
+        }
+        if ($this.RefreshTokenExpiration) { $headers['X-REFRESH-EXPIRY-OVERRIDE'] = $this.RefreshTokenExpiration }
+        if ($this.AccessTokenExpiration)  { $headers['X-ACCESS-EXPIRY-OVERRIDE']  = $this.AccessTokenExpiration }
+
+        try {
+            $response = Invoke-RestMethod -Uri $url -Headers $headers -Method Post -TimeoutSec $this.TimeoutSec
+        } catch {
+            $this.Log("[NCRESTAPI] AuthenticateSso: failed: $($_.Exception.Message)")
+            throw "[NCRESTAPI] SSO authentication failed: $($_.Exception.Message)"
+        }
+        if (-not $response.tokens.access.token -or -not $response.tokens.refresh.token) {
+            throw "[NCRESTAPI] AuthenticateSso: response missing tokens."
+        }
+        $this.AccessToken  = [NCRestAPI]::ToSecureString($response.tokens.access.token)
+        $this.RefreshToken = [NCRestAPI]::ToSecureString($response.tokens.refresh.token)
+        $this.Log("[NCRESTAPI] AuthenticateSso: succeeded.")
+    }
+
     [bool] ValidateToken() {
         if (-not $this.AccessToken) { return $false }
         $url = "$($this.BaseUrl)/api/auth/validate"
@@ -119,7 +154,7 @@ class NCRestAPI {
             $response = Invoke-RestMethod -Uri $url -Headers $headers -Method Post -Body $refreshPlain -TimeoutSec $this.TimeoutSec
         } catch {
             $this.Log("[NCRESTAPI] RefreshAccessToken: $($_.Exception.Message). Re-authenticating.")
-            $this.Authenticate()
+            if ($this.UseSso) { $this.AuthenticateSso() } else { $this.Authenticate() }
             return
         }
         if (-not $response.tokens.access.token) {
@@ -132,7 +167,10 @@ class NCRestAPI {
     }
 
     [void] EnsureValidToken() {
-        if (-not $this.AccessToken) { $this.Authenticate(); return }
+        if (-not $this.AccessToken) {
+            if ($this.UseSso) { $this.AuthenticateSso() } else { $this.Authenticate() }
+            return
+        }
         if (-not $this.ValidateToken()) { $this.RefreshAccessToken() }
     }
 

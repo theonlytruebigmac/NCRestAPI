@@ -3,14 +3,18 @@
 Configures the NCRestAPI module and establishes a connection to the N-central server.
 
 .DESCRIPTION
-Stores the base URL, API token, and optional token-expiration overrides, then authenticates
-and caches a module-scoped NCRestAPI instance that subsequent cmdlets reuse.
+Stores the base URL, API token (or SSO token), and optional token-expiration overrides,
+then authenticates and caches a module-scoped NCRestAPI instance that subsequent cmdlets reuse.
 
 .PARAMETER BaseUrl
 Fully-qualified URL of the N-central server (https:// scheme added if omitted).
 
 .PARAMETER ApiToken
 User-level API token from N-central. Accepts [string] or [securestring].
+
+.PARAMETER SsoToken
+SSO access token from an external identity provider. Accepts [string] or [securestring].
+Uses POST /api/auth/sso instead of /api/auth/authenticate.
 
 .PARAMETER AccessTokenExpiration
 Access-token lifetime override (e.g. '120s', '30m', '1h'). Default '1h'.
@@ -39,14 +43,17 @@ Set-NCRestConfig -BaseUrl ... -ApiToken ... -ThrottleMs 200 -MaxRetries 5
 Author: Zach Frazier
 #>
 function Set-NCRestConfig {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'ApiToken')]
     param (
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$BaseUrl,
 
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory, ParameterSetName = 'ApiToken')]
         [object]$ApiToken,
+
+        [Parameter(Mandatory, ParameterSetName = 'SsoToken')]
+        [object]$SsoToken,
 
         [ValidatePattern('^\d+[smh]$')]
         [string]$AccessTokenExpiration = '1h',
@@ -67,16 +74,20 @@ function Set-NCRestConfig {
     if ($BaseUrl -notmatch '^https?://') { $BaseUrl = 'https://' + $BaseUrl }
     $BaseUrl = $BaseUrl.TrimEnd('/')
 
-    if ($ApiToken -is [securestring]) {
-        $secureApiToken = $ApiToken
-    } elseif ($ApiToken -is [string]) {
-        $secureApiToken = [NCRestAPI]::ToSecureString($ApiToken)
+    $useSso = $PSCmdlet.ParameterSetName -eq 'SsoToken'
+    $rawToken = if ($useSso) { $SsoToken } else { $ApiToken }
+
+    if ($rawToken -is [securestring]) {
+        $secureToken = $rawToken
+    } elseif ($rawToken -is [string]) {
+        $secureToken = [NCRestAPI]::ToSecureString($rawToken)
     } else {
-        throw "ApiToken must be [string] or [securestring]."
+        throw "Token must be [string] or [securestring]."
     }
 
-    Write-Verbose "[NCRESTCONFIG] Creating NCRestAPI instance for $BaseUrl."
-    $instance = [NCRestAPI]::new($BaseUrl, $secureApiToken, $AccessTokenExpiration, $RefreshTokenExpiration, ($VerbosePreference -eq 'Continue'))
+    $authLabel = if ($useSso) { 'SSO' } else { 'API token' }
+    Write-Verbose "[NCRESTCONFIG] Creating NCRestAPI instance for $BaseUrl ($authLabel)."
+    $instance = [NCRestAPI]::new($BaseUrl, $secureToken, $AccessTokenExpiration, $RefreshTokenExpiration, ($VerbosePreference -eq 'Continue'), $useSso)
     $instance.TimeoutSec = $TimeoutSec
     $instance.MaxRetries = $MaxRetries
     $instance.ThrottleMs = $ThrottleMs

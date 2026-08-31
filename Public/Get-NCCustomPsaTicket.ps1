@@ -3,14 +3,17 @@
 Retrieves details for a specific Custom-PSA ticket.
 
 .DESCRIPTION
-POST /api/custom-psa/tickets/{customPsaTicketId}. The spec defines this as POST with a
-PSA credential body.
+GET /api/custom-psa/tickets/{customPsaTicketId} returns the ticket without credentials.
+Supply -Credential to use the POST variant which authenticates against the PSA integration.
 
 .PARAMETER CustomPsaTicketId
 Ticket ID.
 
 .PARAMETER Credential
-PSCredential containing username and password for the PSA integration.
+Optional PSCredential for the PSA integration. When omitted, the credential-free GET endpoint is used.
+
+.EXAMPLE
+Get-NCCustomPsaTicket -CustomPsaTicketId 'TKT-42'
 
 .EXAMPLE
 Get-NCCustomPsaTicket -CustomPsaTicketId 'TKT-42' -Credential (Get-Credential)
@@ -23,16 +26,19 @@ function Get-NCCustomPsaTicket {
         [ValidateNotNullOrEmpty()]
         [string]$CustomPsaTicketId,
 
-        [Parameter(Mandatory)]
         [pscredential]$Credential
     )
     begin { $api = Get-NCRestApiInstance }
     process {
-        Write-Verbose "[FUNCTION] Get-NCCustomPsaTicket: invoked."
-        $body = @{
-            username = $Credential.UserName
-            password = $Credential.GetNetworkCredential().Password
+        if ($Credential) {
+            Write-Verbose "[FUNCTION] Get-NCCustomPsaTicket: POST api/custom-psa/tickets/$CustomPsaTicketId"
+            $body = @{
+                username = $Credential.UserName
+                password = $Credential.GetNetworkCredential().Password
+            }
+            return $api.Post("api/custom-psa/tickets/$CustomPsaTicketId", $body)
         }
-        $api.Post("api/custom-psa/tickets/$CustomPsaTicketId", $body)
+        Write-Verbose "[FUNCTION] Get-NCCustomPsaTicket: GET api/custom-psa/tickets/$CustomPsaTicketId"
+        $api.Get("api/custom-psa/tickets/$CustomPsaTicketId")
     }
 }

@@ -4,12 +4,16 @@ Establishes a connection to an N-central server.
 
 .DESCRIPTION
 Wrapper around Set-NCRestConfig that follows the PowerShell Connect-* convention.
+Supports both API token and SSO token authentication.
 
 .PARAMETER BaseUrl
 Fully-qualified URL of the N-central server (https:// scheme added if omitted).
 
 .PARAMETER ApiToken
 User-level API token. Accepts [string] or [securestring].
+
+.PARAMETER SsoToken
+SSO access token from an external identity provider. Accepts [string] or [securestring].
 
 .PARAMETER AccessTokenExpiration
 Override access-token lifetime (e.g. '1h', '120s'). Default '1h'.
@@ -18,26 +22,29 @@ Override access-token lifetime (e.g. '1h', '120s'). Default '1h'.
 Override refresh-token lifetime (e.g. '25h'). Default '25h'.
 
 .PARAMETER PassThru
-Emit the connection info object after authenticating - useful in scripts that want to
-confirm the connect succeeded without a follow-up call.
+Emit the connection info object after authenticating.
 
 .EXAMPLE
 Connect-NCentral -BaseUrl 'n-central.example.com' -ApiToken $token
 
 .EXAMPLE
-$conn = Connect-NCentral -BaseUrl 'n-central.example.com' -ApiToken $token -PassThru
+Connect-NCentral -BaseUrl 'n-central.example.com' -SsoToken $ssoToken -PassThru
 #>
 function Connect-NCentral {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'ApiToken')]
     [OutputType([pscustomobject])]
     param (
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$BaseUrl,
 
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory, ParameterSetName = 'ApiToken')]
         [ValidateNotNullOrEmpty()]
         [object]$ApiToken,
+
+        [Parameter(Mandatory, ParameterSetName = 'SsoToken')]
+        [ValidateNotNullOrEmpty()]
+        [object]$SsoToken,
 
         [ValidatePattern('^\d+[smh]$')]
         [string]$AccessTokenExpiration = '1h',
