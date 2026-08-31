@@ -6,6 +6,7 @@ Handles authentication, token refresh, pagination, and retries so you can focus 
 ## Features
 
 - Token-based authentication with automatic refresh (`/api/auth/authenticate`, `/api/auth/refresh`)
+- SSO authentication via external identity providers (`/api/auth/sso`)
 - Tokens held in memory as `SecureString` — never written to disk or environment
 - Unified request path with automatic retry on 429 / 5xx, 60 s timeout, and URL-encoded query strings
 - Verbose logging scrubs JWTs from output
@@ -29,6 +30,9 @@ Connect-NCentral -BaseUrl 'n-central.example.com' -ApiToken $env:NC_API_TOKEN
 
 # Or Set-NCRestConfig (same thing, older name)
 Set-NCRestConfig -BaseUrl 'n-central.example.com' -ApiToken $env:NC_API_TOKEN
+
+# SSO authentication (external identity provider)
+Connect-NCentral -BaseUrl 'n-central.example.com' -SsoToken $ssoAccessToken
 
 # Use
 Get-NCDevices -OrgUnitId 42 -All            # auto-paginates
@@ -54,7 +58,7 @@ Connect-NCentral -BaseUrl ... -ApiToken ... -AccessTokenExpiration '15m' -Refres
 
 | Command | Endpoint(s) |
 | --- | --- |
-| `Connect-NCentral` / `Set-NCRestConfig` | `/api/auth/authenticate` |
+| `Connect-NCentral` / `Set-NCRestConfig` | `/api/auth/authenticate`, `/api/auth/sso` |
 | `Disconnect-NCentral` / `Get-NCRestApiInfo -Kill` | — |
 | `Get-NCDevices` | `/api/devices`, `/api/devices/{id}`, `/api/org-units/{id}/devices` |
 | `Get-NCCustomers` | `/api/customers`, `/api/customers/{id}`, `/api/service-orgs/{id}/customers` |
@@ -68,13 +72,16 @@ Connect-NCentral -BaseUrl ... -ApiToken ... -AccessTokenExpiration '15m' -Refres
 | `Get-NCDeviceScheduledTasks` | `/api/devices/{id}/scheduled-tasks` |
 | `Get-NCDeviceActivationKey` | `/api/devices/{id}/activation-key` |
 | `Get-NCDeviceMaintenanceWindows` | `GET /api/devices/{id}/maintenance-windows` |
+| `Get-NCDeviceNotes` / `New-NCDeviceNote` / `Set-NCDeviceNote` / `Remove-NCDeviceNote` | Device notes CRUD at `/api/devices/{id}/notes[/{noteId}]`, `/api/devices/notes` |
 | `New-NCMaintenanceWindows` / `Set-NCMaintenanceWindows` / `Remove-NCMaintenanceWindows` | Maintenance-window CRUD at `/api/devices/maintenance-windows` |
 | `Get-NCAssetLifecycle` / `Set-NCAssetLifecycle` / `Update-NCAssetLifecycle` | `/api/devices/{id}/assets/lifecycle-info` (GET / PUT / PATCH) |
 | `New-NCDevice` | `POST /api/device` (device enrollment) |
 | `Remove-NCDevice` | `DELETE /api/devices/{id}` (supports `-WhatIf`/`-Confirm`) |
 | `Get-NCSoftwareInstallers` / `New-NCSoftwareDownloadLink` | `/api/customers/{id}/software/installers` |
 | `Get-NCReport` / `New-NCPatchComparisonReport` | `/api/report/...` |
-| `Get-NCStandardPsaCustomerMapping` / `Test-NCStandardPsaCredential` / `Get-NCCustomPsaTicket` | PSA integrations (`/api/standard-psa`, `/api/custom-psa`) |
+| `Get-NCStandardPsaCustomerMapping` / `Set-NCStandardPsaCustomerMapping` / `Test-NCStandardPsaCredential` / `Get-NCCustomPsaTicket` | PSA integrations (`/api/standard-psa`, `/api/custom-psa`) |
+| `Get-NCStandardPsaCompanies` / `Get-NCStandardPsaContacts` / `Get-NCStandardPsaSites` | Standard PSA company/contact/site lookups |
+| `New-NCCustomPsaTicket` / `Invoke-NCCustomPsaTicket` | Custom PSA ticket create / reopen / resolve |
 | `Get-NCDeviceProperty` / `Set-NCDeviceProperty` | `/api/devices/{id}/custom-properties[/{propId}]` |
 | `Get-NCOrgProperty` / `Set-NCOrgProperty` | `/api/org-units/{id}/custom-properties[/{propId}]` |
 | `Get-NCDefaultOrgProperty` / `Set-NCDefaultOrgProperty` | `/api/org-units/{id}/org-custom-property-defaults[/{propId}]` |
@@ -85,12 +92,16 @@ Connect-NCentral -BaseUrl ... -ApiToken ... -AccessTokenExpiration '15m' -Refres
 | `Get-NCScheduledTasks` / `Get-NCScheduledTaskStatus` | `/api/scheduled-tasks/...` |
 | `New-NCScheduledTask` | `POST /api/scheduled-tasks/direct` |
 | `Get-NCRegTokens` | `/api/{customers,sites,org-units}/{id}/registration-token` |
-| `Get-NCServerInfo` | `/api`, `/api/server-info`, `/api/server-info/extra`, `/api/health` |
-| `Get-NCUsers` / `Get-NCUserRoles` / `New-NCUserRole` | `/api/users`, `/api/org-units/{id}/users`, `.../user-roles` |
+| `Get-NCServerInfo` | `/api`, `/api/server-info`, `/api/server-info/extra`, `/api/server-info/time`, `/api/health` |
+| `Get-NCCurrentUser` | `/api/users/me` |
+| `Get-NCOrgLimits` / `Set-NCOrgLimits` | `/api/org-units/{id}/limits` (GET / PATCH) |
+| `New-NCRemoteControlTask` / `Get-NCRemoteControlType` | `/api/devices/{id}/remote-control-task`, `.../remote-control-type` |
+| `Invoke-NCDeviceServiceAction` | `POST /api/devices/{id}/services/actions` |
+| `Get-NCUsers` / `Get-NCUserRoles` / `New-NCUserRole` / `New-NCUser` | `/api/users`, `/api/org-units/{id}/users`, `.../user-roles` |
 | `New-NCCustomer` / `New-NCServiceOrg` / `New-NCSite` | Customer / SO / site creation |
 | `New-NCDeviceAccessGroup` / `New-NCOrgAccessGroup` | Access-group creation |
 | `Get-NCRestData` | Escape hatch for any endpoint not yet wrapped (`-Method Get/Post/Put/Patch/Delete`, `-Body`) |
-| `Get-NCApiLinks` | Hypermedia `_links` at `/api`, `/api/custom-psa*`, `/api/standard-psa` |
+| `Get-NCApiLinks` | Hypermedia `_links` at `/api`, `/api/access-groups`, `/api/custom-psa*`, `/api/scheduled-tasks`, `/api/standard-psa`, `/api/users` |
 
 Run `Get-Help <cmdlet> -Examples` for usage on any command.
 
