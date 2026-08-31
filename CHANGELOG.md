@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.9.0
+
+### Added
+
+- **Device Notes**: `Get-NCDeviceNotes`, `New-NCDeviceNote`, `Set-NCDeviceNote`,
+  `Remove-NCDeviceNote` — full CRUD for device notes including bulk operations.
+- **Custom PSA Tickets**: `New-NCCustomPsaTicket` (create), `Invoke-NCCustomPsaTicket`
+  (reopen/resolve). `Get-NCCustomPsaTicket` now supports the credential-free `GET`
+  variant in addition to the existing `POST`.
+- **Standard PSA**: `Set-NCStandardPsaCustomerMapping` (update mappings),
+  `Get-NCStandardPsaCompanies`, `Get-NCStandardPsaContacts`, `Get-NCStandardPsaSites`.
+- **Remote Control**: `New-NCRemoteControlTask`, `Get-NCRemoteControlType`.
+- **Org Unit Limits**: `Get-NCOrgLimits`, `Set-NCOrgLimits`.
+- **User Management**: `New-NCUser` (create user in org unit),
+  `Get-NCCurrentUser` (`GET /api/users/me`).
+- **Windows Services**: `Invoke-NCDeviceServiceAction` (start/stop/restart).
+- **SSO Authentication**: `Connect-NCentral -SsoToken` and `Set-NCRestConfig -SsoToken`
+  for identity-provider-based authentication via `POST /api/auth/sso`.
+- `Get-NCServerInfo -Time`: `GET /api/server-info/time`.
+- `Get-NCApiLinks`: added `-AccessGroups`, `-ScheduledTasks`, `-Users` switches
+  for the remaining navigation endpoints.
+
 ## 1.8.1
 
 ### Fixed
