@@ -25,7 +25,7 @@ function New-NCRemoteControlTask {
     param (
         [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
-        [int]$DeviceId,
+        [string]$DeviceId,
 
         [string]$RemoteControlType,
         [string]$Description,

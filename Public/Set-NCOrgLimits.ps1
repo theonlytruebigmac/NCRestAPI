@@ -20,7 +20,7 @@ function Set-NCOrgLimits {
     param (
         [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
-        [int]$OrgUnitId,
+        [string]$OrgUnitId,
 
         [Parameter(Mandatory)]
         [hashtable]$Limits

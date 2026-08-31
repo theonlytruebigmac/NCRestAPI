@@ -27,6 +27,7 @@ function Get-NCApiLinks {
     [OutputType([pscustomobject])]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification = 'Parameters are discriminators consumed via ParameterSetName.')]
     param (
+        [Parameter(ParameterSetName = 'Root')][switch]$Root,
         [Parameter(ParameterSetName = 'AccessGroups')][switch]$AccessGroups,
         [Parameter(ParameterSetName = 'CustomPsa')][switch]$CustomPsa,
         [Parameter(ParameterSetName = 'CustomPsaTickets')][switch]$CustomPsaTickets,

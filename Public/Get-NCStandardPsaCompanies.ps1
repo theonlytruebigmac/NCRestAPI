@@ -17,7 +17,7 @@ function Get-NCStandardPsaCompanies {
     param (
         [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
-        [int]$CustomerId
+        [string]$CustomerId
     )
     begin { $api = Get-NCRestApiInstance }
     process {

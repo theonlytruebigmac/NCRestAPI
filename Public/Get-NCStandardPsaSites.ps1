@@ -20,11 +20,11 @@ function Get-NCStandardPsaSites {
     param (
         [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
-        [int]$CustomerId,
+        [string]$CustomerId,
 
         [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
-        [int]$PsaCompanyId
+        [string]$PsaCompanyId
     )
     begin { $api = Get-NCRestApiInstance }
     process {

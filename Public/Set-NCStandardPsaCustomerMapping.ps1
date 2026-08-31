@@ -25,7 +25,7 @@ function Set-NCStandardPsaCustomerMapping {
     param (
         [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
-        [int]$CustomerId,
+        [string]$CustomerId,
 
         [int]$PsaCompanyId,
         [int]$PsaSiteId,

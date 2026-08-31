@@ -17,7 +17,7 @@ function Get-NCOrgLimits {
     param (
         [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
-        [int]$OrgUnitId
+        [string]$OrgUnitId
     )
     begin { $api = Get-NCRestApiInstance }
     process {

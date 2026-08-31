@@ -22,7 +22,7 @@ function Invoke-NCDeviceServiceAction {
     param (
         [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
-        [int]$DeviceId,
+        [string]$DeviceId,
 
         [Parameter(Mandatory)]
         [string[]]$ServiceNames,

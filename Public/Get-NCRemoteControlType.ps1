@@ -17,7 +17,7 @@ function Get-NCRemoteControlType {
     param (
         [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
-        [int]$DeviceId
+        [string]$DeviceId
     )
     begin { $api = Get-NCRestApiInstance }
     process {
